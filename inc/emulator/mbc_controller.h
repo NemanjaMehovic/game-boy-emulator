@@ -1,0 +1,41 @@
+#ifndef MBC_CONTROLLER_H
+#define MBC_CONTROLLER_H
+
+#include "cartridge.h"
+#include "common.h"
+
+class MBC_Handler
+{
+public:
+  MBC_Handler(uint8* data, header* header);
+  virtual void write(uint16 address, uint8 val) = 0;
+  virtual uint8 read(uint16 address) = 0;
+
+  static std::unique_ptr<MBC_Handler> CreateHandler(Cartridge* cartridge);
+
+protected:
+  uint8* m_data = nullptr;
+  header* m_header = nullptr;
+
+  virtual void write_rom(uint16 address, uint8 val) = 0;
+  virtual void write_ram(uint16 address, uint8 val) = 0;
+  virtual uint8 read_rom(uint16 address) = 0;
+  virtual uint8 read_ram(uint16 address) = 0;
+};
+
+class NoMBC_Handler : public MBC_Handler
+{
+public:
+  NoMBC_Handler(uint8* data, header* header);
+
+  virtual void write(uint16 address, uint8 val) override;
+  virtual uint8 read(uint16 address) override;
+
+protected:
+  virtual void write_rom(uint16 address, uint8 val) override;
+  virtual void write_ram(uint16 address, uint8 val) override;
+  virtual uint8 read_rom(uint16 address) override;
+  virtual uint8 read_ram(uint16 address) override;
+};
+
+#endif // MBC_CONTROLLER_H

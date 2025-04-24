@@ -1,8 +1,9 @@
 #ifndef CARTRIDGE_H
 #define CARTRIDGE_H
 
-#include "common.h"
 #include <memory>
+
+#include "common.h"
 
 typedef struct _header
 {
@@ -21,22 +22,37 @@ typedef struct _header
   uint16 global_checksum;
 } header;
 
+class MBC_Handler;
+
 class Cartridge
 {
+  friend class MBC_Handler;
+
 public:
   Cartridge(std::string location);
+  ~Cartridge();
+
   std::string getTitle();
   std::string getTypeName();
   std::string getLicName();
 
+  void write(uint16 address, uint8 val);
+  uint8 read(uint16 address);
+
+  bool isValidCartridge();
+
 private:
   std::string getDebugMsg();
+  bool checkData();
 
-  std::string cartridge_location;
+  std::string m_cartridge_location;
+  bool m_valid = false;
   // cartridge data
-  std::unique_ptr<uint8[]> data;
-  header* cartridge_header;
-  uint32 cartridge_size;
+  std::unique_ptr<uint8[]> m_data;
+  header* m_cartridge_header;
+  uint32 m_cartridge_size;
+
+  std::unique_ptr<MBC_Handler> m_mbc_handler;
 };
 
 #endif // CARTRIDGE_H

@@ -4,7 +4,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 
-#include "cartridge.h"
+#include "emulator.h"
 #include "ui_mainwindow.h"
 
 MainWindow::MainWindow(QWidget* parent)
@@ -24,9 +24,14 @@ MainWindow::on_pushButton_clicked()
 {
   QString file = QFileDialog::getOpenFileName(
     this, "Select Cartridge", QDir::homePath(), "gb");
-  if (file.isEmpty())
+  if (file.isEmpty()) {
     QMessageBox::information(this, "Error", "No Cartridge selected");
-  else {
-    Cartridge test(file.toStdString());
+    return;
+  }
+  m_emulator = std::make_unique<Emulator>(file.toStdString());
+  if (!m_emulator->isValid()) {
+    QMessageBox::information(
+      this, "Error", "Failed to create a valid emulator");
+    m_emulator.reset();
   }
 }

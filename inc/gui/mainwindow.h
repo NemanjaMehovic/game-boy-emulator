@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 
+#include "emulator.h"
+
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class MainWindow;
@@ -21,5 +23,6 @@ private slots:
 
 private:
   Ui::MainWindow* ui;
+  std::unique_ptr<Emulator> m_emulator;
 };
 #endif // MAINWINDOW_H
