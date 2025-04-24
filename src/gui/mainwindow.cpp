@@ -4,7 +4,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 
-#include "rom.h"
+#include "cartridge.h"
 #include "ui_mainwindow.h"
 
 MainWindow::MainWindow(QWidget* parent)
@@ -22,11 +22,11 @@ MainWindow::~MainWindow()
 void
 MainWindow::on_pushButton_clicked()
 {
-  QString file =
-    QFileDialog::getOpenFileName(this, "Select ROM", QDir::homePath(), "gb");
+  QString file = QFileDialog::getOpenFileName(
+    this, "Select Cartridge", QDir::homePath(), "gb");
   if (file.isEmpty())
-    QMessageBox::information(this, "Error", "No ROM selected");
+    QMessageBox::information(this, "Error", "No Cartridge selected");
   else {
-    Rom test(file.toStdString());
+    Cartridge test(file.toStdString());
   }
 }

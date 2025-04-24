@@ -83,7 +83,7 @@
       <item>
        <widget class="QPushButton" name="pushButton">
         <property name="text">
-         <string>Load ROM</string>
+         <string>Load Cartridge</string>
         </property>
        </widget>
       </item>

@@ -1,5 +1,5 @@
-#ifndef ROM_H
-#define ROM_H
+#ifndef CARTRIDGE_H
+#define CARTRIDGE_H
 
 #include "common.h"
 #include <memory>
@@ -21,10 +21,10 @@ typedef struct _header
   uint16 global_checksum;
 } header;
 
-class Rom
+class Cartridge
 {
 public:
-  Rom(std::string location);
+  Cartridge(std::string location);
   std::string getTitle();
   std::string getTypeName();
   std::string getLicName();
@@ -32,11 +32,11 @@ public:
 private:
   std::string getDebugMsg();
 
-  std::string rom_location;
-  // rom data
+  std::string cartridge_location;
+  // cartridge data
   std::unique_ptr<uint8[]> data;
-  header* rom_header;
-  uint32 rom_size;
+  header* cartridge_header;
+  uint32 cartridge_size;
 };
 
-#endif // ROM_H
+#endif // CARTRIDGE_H
