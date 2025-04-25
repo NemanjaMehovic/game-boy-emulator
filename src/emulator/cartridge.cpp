@@ -117,6 +117,13 @@ Cartridge::checkData()
 {
   bool flag = true;
   uint8_t checksum = 0;
+
+  if (m_cartridge_header->ram_size != 0 &&
+      RAM_SIZES.find(m_cartridge_header->ram_size) == RAM_SIZES.cend()) {
+    log_error("Unknown ram size 0x%X", m_cartridge_header->ram_size);
+    flag = false;
+  }
+
   for (uint16_t address = 0x0134; address <= 0x014C; address++) {
     checksum = checksum - m_data[address] - 1;
   }

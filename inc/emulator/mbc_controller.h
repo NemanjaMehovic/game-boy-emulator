@@ -8,13 +8,15 @@ class MBC_Handler
 {
 public:
   MBC_Handler(uint8* data, header* header);
-  virtual void write(uint16 address, uint8 val) = 0;
-  virtual uint8 read(uint16 address) = 0;
+  virtual ~MBC_Handler() = default;
+  void write(uint16 address, uint8 val);
+  uint8 read(uint16 address);
 
   static std::unique_ptr<MBC_Handler> CreateHandler(Cartridge* cartridge);
 
 protected:
   uint8* m_data = nullptr;
+  std::unique_ptr<uint8[]> m_ram = nullptr;
   header* m_header = nullptr;
 
   virtual void write_rom(uint16 address, uint8 val) = 0;
@@ -27,9 +29,6 @@ class NoMBC_Handler : public MBC_Handler
 {
 public:
   NoMBC_Handler(uint8* data, header* header);
-
-  virtual void write(uint16 address, uint8 val) override;
-  virtual uint8 read(uint16 address) override;
 
 protected:
   virtual void write_rom(uint16 address, uint8 val) override;

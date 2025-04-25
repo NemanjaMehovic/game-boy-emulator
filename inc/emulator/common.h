@@ -71,6 +71,13 @@ const std::unordered_map<uint8, std::string> ROM_TYPES = {
   { 0xFF, "HuC1+RAM+BATTERY" }                // not supported
 };
 
+const std::unordered_map<uint8, uint32> RAM_SIZES = {
+  { 0x02, 0x2000 },
+  { 0x03, 0x8000 },
+  { 0x04, 0x20000 },
+  { 0x05, 0x10000 },
+};
+
 const std::unordered_map<uint8, std::string> OLD_LIC_CODE = {
   { 0x00, "None" },
   { 0x01, "Nintendo" },
