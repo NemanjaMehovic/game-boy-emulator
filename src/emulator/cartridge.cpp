@@ -5,8 +5,6 @@
 
 #include "mbc_controller.h"
 
-static_assert(sizeof(uint8) == sizeof(char));
-
 Cartridge::Cartridge(std::string location)
   : m_cartridge_location(location)
 {

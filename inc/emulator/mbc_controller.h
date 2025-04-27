@@ -45,19 +45,21 @@ protected:
 class MBC1_Handler : public MBC_Handler
 {
 public:
-  MBC1_Handler(uint8* data, header* header)
-    : MBC_Handler(data, header)
-  {
-  }
+  MBC1_Handler(uint8* data, header* header);
 
 protected:
   virtual void write_rom(uint16 address, uint8 val) override;
   virtual void write_ram(uint16 address, uint8 val) override;
   virtual uint8 read_rom(uint16 address) override;
   virtual uint8 read_ram(uint16 address) override;
+
+private:
+  bool checkIsMBC1M();
+
   uint8 m_mode = 0;
   uint8 m_low_banking_bits = 0;
   uint8 m_high_banking_bits = 0;
+  bool m_is_mbc1m = false;
 };
 
 #endif // MBC_CONTROLLER_H
