@@ -8,7 +8,7 @@ class MBC_Handler
 {
 public:
   MBC_Handler(uint8* data, header* header);
-  virtual ~MBC_Handler() = default;
+  virtual ~MBC_Handler();
   void write(uint16 address, uint8 val);
   uint8 read(uint16 address);
 
@@ -18,6 +18,8 @@ protected:
   uint8* m_data = nullptr;
   std::unique_ptr<uint8[]> m_ram = nullptr;
   header* m_header = nullptr;
+  bool m_has_battery = false;
+  bool m_enabled_ram = false;
 
   virtual void write_rom(uint16 address, uint8 val) = 0;
   virtual void write_ram(uint16 address, uint8 val) = 0;
@@ -28,13 +30,34 @@ protected:
 class NoMBC_Handler : public MBC_Handler
 {
 public:
-  NoMBC_Handler(uint8* data, header* header);
+  NoMBC_Handler(uint8* data, header* header)
+    : MBC_Handler(data, header)
+  {
+  }
 
 protected:
   virtual void write_rom(uint16 address, uint8 val) override;
   virtual void write_ram(uint16 address, uint8 val) override;
   virtual uint8 read_rom(uint16 address) override;
   virtual uint8 read_ram(uint16 address) override;
+};
+
+class MBC1_Handler : public MBC_Handler
+{
+public:
+  MBC1_Handler(uint8* data, header* header)
+    : MBC_Handler(data, header)
+  {
+  }
+
+protected:
+  virtual void write_rom(uint16 address, uint8 val) override;
+  virtual void write_ram(uint16 address, uint8 val) override;
+  virtual uint8 read_rom(uint16 address) override;
+  virtual uint8 read_ram(uint16 address) override;
+  uint8 m_mode = 0;
+  uint8 m_low_banking_bits = 0;
+  uint8 m_high_banking_bits = 0;
 };
 
 #endif // MBC_CONTROLLER_H

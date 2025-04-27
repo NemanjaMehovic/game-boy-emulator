@@ -11,6 +11,12 @@ MBC_Handler::CreateHandler(Cartridge* cartridge)
       handler = std::make_unique<NoMBC_Handler>(data, cartridge_header);
       log_info("Created a NoMbc handler");
       break;
+    case MBC1:
+    case MBC1Ram:
+    case MBC1RamB:
+      handler = std::make_unique<MBC1_Handler>(data, cartridge_header);
+      log_info("Created an MBC1 handler");
+      break;
     default:
       log_error("Attempting to create an unsupported MBC handler of type 0x%X",
                 cartridge_header->type);
@@ -23,6 +29,23 @@ MBC_Handler::MBC_Handler(uint8* data, header* header)
   : m_data(data)
   , m_header(header)
 {
+  m_has_battery = HAS_BATTERY.find(m_header->type) != HAS_BATTERY.cend();
+  if (m_header->ram_size > 0) {
+    m_ram =
+      std::make_unique<uint8[]>(RAM_SIZES.find(m_header->ram_size)->second);
+  }
+  if (m_has_battery && m_ram) {
+    log_info("Loading from a save file");
+    // TODO implement restore from save
+  }
+}
+
+MBC_Handler::~MBC_Handler()
+{
+  if (m_has_battery && m_ram) {
+    log_info("Creating a save file");
+    // TODO implement save
+  }
 }
 
 void
@@ -46,15 +69,6 @@ MBC_Handler::read(uint16 address)
 
   log_error("Called MBC read for address 0x%X", address);
   return 0xFF;
-}
-
-NoMBC_Handler::NoMBC_Handler(uint8* data, header* header)
-  : MBC_Handler(data, header)
-{
-  if (m_header->ram_size > 0) {
-    m_ram =
-      std::make_unique<uint8[]>(RAM_SIZES.find(m_header->ram_size)->second);
-  }
 }
 
 void
@@ -88,4 +102,70 @@ NoMBC_Handler::read_ram(uint16 address)
     return 0xFF;
   }
   return m_ram[address];
+}
+
+void
+MBC1_Handler::write_rom(uint16 address, uint8 val)
+{
+  if (address < 0x2000) {
+    m_enabled_ram = mask_n_bits(4, val) == 0xA;
+    log_info("Set m_enable_ram to %d", m_enabled_ram);
+    return;
+  }
+  if (address < 0x4000) {
+    uint8 tmpVal = mask_n_bits(5, val);
+    // TODO handle MBC1M?
+    m_low_banking_bits = tmpVal != 0 ? tmpVal : 1;
+    log_info("Set m_low_banking_bits to 0x%X", m_low_banking_bits);
+    return;
+  }
+  if (address < 0x6000) {
+    m_high_banking_bits = mask_n_bits(2, val);
+    log_info("Set m_high_banking_bits to 0x%X", m_high_banking_bits);
+    return;
+  }
+  m_mode = val & 1;
+  log_info("Set m_mode to %d", m_mode);
+}
+
+void
+MBC1_Handler::write_ram(uint16 address, uint8 val)
+{
+  if (!m_ram || !m_enabled_ram) {
+    log_error("Called write to ram for MBC1 that has no ram/hasn't enabled it");
+    return;
+  }
+  uint32 tmp_address = mask_n_bits(13, address);
+  if (m_mode == 1) {
+    tmp_address = (m_high_banking_bits << 13) | tmp_address;
+  }
+  m_ram[tmp_address] = val;
+}
+
+uint8
+MBC1_Handler::read_rom(uint16 address)
+{
+  uint32 tmp_address = 0;
+  if (address >= 0x4000) {
+    tmp_address = m_high_banking_bits << 5 | m_low_banking_bits;
+  } else if (m_mode == 1) {
+    tmp_address = m_high_banking_bits << 5;
+  }
+  tmp_address = (tmp_address << 14) | mask_n_bits(14, address);
+  return m_data[tmp_address];
+}
+
+uint8
+MBC1_Handler::read_ram(uint16 address)
+{
+  if (!m_ram || !m_enabled_ram) {
+    log_error(
+      "Called read from ram for MBC1 that has no ram/hasn't enabled it");
+    return 0xFF;
+  }
+  uint32 tmp_address = mask_n_bits(13, address);
+  if (m_mode == 1) {
+    tmp_address = (m_high_banking_bits << 13) | tmp_address;
+  }
+  return m_ram[tmp_address];
 }

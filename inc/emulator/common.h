@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 
 using uint8 = std::uint8_t;
 using uint16 = std::uint16_t;
@@ -77,6 +78,11 @@ const std::unordered_map<uint8, uint32> RAM_SIZES = {
   { 0x04, 0x20000 },
   { 0x05, 0x10000 },
 };
+
+const std::unordered_set<uint8> HAS_BATTERY = { MBC1RamB, MBC2B,    0x09,
+                                                0x0D,     MBC3BT,   MBC3RamBT,
+                                                MBC3RamB, MBC5RamB, MBC5RamBR,
+                                                0x22 };
 
 const std::unordered_map<uint8, std::string> OLD_LIC_CODE = {
   { 0x00, "None" },
@@ -297,6 +303,14 @@ constexpr uint8 NINTENDO_LOGO[] = {
   0xDC, 0xCC, 0x6E, 0xE6, 0xDD, 0xDD, 0xD9, 0x99, 0xBB, 0xBB, 0x67, 0x63,
   0x6E, 0x0E, 0xEC, 0xCC, 0xDD, 0xDC, 0x99, 0x9F, 0xBB, 0xB9, 0x33, 0x3E
 };
+
+template<typename T>
+T
+mask_n_bits(uint8 n, T value)
+{
+  T mask = (1 << n) - 1;
+  return value & mask;
+}
 
 class Logger
 {
