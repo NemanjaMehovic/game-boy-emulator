@@ -1,6 +1,8 @@
 #include "mbc_controller.h"
 
+#include <cmath>
 #include <cstring>
+#include <fstream>
 
 std::unique_ptr<MBC_Handler>
 MBC_Handler::CreateHandler(Cartridge* cartridge)
@@ -37,22 +39,55 @@ MBC_Handler::MBC_Handler(uint8* data, header* header)
   , m_header(header)
 {
   m_has_battery = HAS_BATTERY.find(m_header->type) != HAS_BATTERY.cend();
+  m_rom_size = (32 * 1024) << m_header->rom_size;
   if (m_header->ram_size > 0) {
-    m_ram =
-      std::make_unique<uint8[]>(RAM_SIZES.find(m_header->ram_size)->second);
+    m_ram_size = RAM_SIZES.find(m_header->ram_size)->second;
+    m_ram = std::make_unique<uint8[]>(m_ram_size);
   }
   if (m_has_battery && m_ram) {
-    log_info("Loading from a save file");
-    // TODO implement restore from save
+    load();
   }
 }
 
 MBC_Handler::~MBC_Handler()
 {
   if (m_has_battery && m_ram) {
-    log_info("Creating a save file");
-    // TODO implement save
+    save();
   }
+}
+
+void
+MBC_Handler::save()
+{
+  std::string name(m_header->title);
+  name = name + ".gbsave";
+  std::ofstream file(name, std::ios::binary);
+  log_info("Creating %s as a save file", name.c_str());
+  if (!file.is_open()) {
+    log_error("Failed to open %s can't save", name.c_str());
+    return;
+  }
+  for (uint32 i = 0; i < m_ram_size; i++) {
+    file << m_ram[i];
+  }
+  log_info("Done saving");
+}
+
+void
+MBC_Handler::load()
+{
+  std::string name(m_header->title);
+  name = name + ".gbsave";
+  std::ifstream file(name, std::ios::binary);
+  log_info("Attempting to load from %s save file", name.c_str());
+  if (!file.is_open()) {
+    log_info("Failed to find or load save");
+    return;
+  }
+  for (uint32 i = 0; i < m_ram_size; i++) {
+    file >> m_ram[i];
+  }
+  log_info("Done loading");
 }
 
 void
@@ -172,6 +207,12 @@ MBC1_Handler::write_ram(uint16 address, uint8 val)
   if (m_mode == 1) {
     tmp_address = (m_high_banking_bits << 13) | tmp_address;
   }
+  if (tmp_address >= m_ram_size) {
+    log_error("Address 0x%X is out of scope, ram size is only 0x%X",
+              tmp_address,
+              m_ram_size);
+    tmp_address = mask_n_bits(std::log2(m_ram_size), tmp_address);
+  }
   m_ram[tmp_address] = val;
 }
 
@@ -186,6 +227,12 @@ MBC1_Handler::read_rom(uint16 address)
     tmp_address = m_high_banking_bits << (m_is_mbc1m ? 4 : 5);
   }
   tmp_address = (tmp_address << 14) | mask_n_bits(14, address);
+  if (tmp_address >= m_rom_size) {
+    log_error("Address 0x%X is out of scope, rom size is only 0x%X",
+              tmp_address,
+              m_rom_size);
+    tmp_address = mask_n_bits(std::log2(m_rom_size), tmp_address);
+  }
   return m_data[tmp_address];
 }
 
@@ -201,6 +248,12 @@ MBC1_Handler::read_ram(uint16 address)
   if (m_mode == 1) {
     tmp_address = (m_high_banking_bits << 13) | tmp_address;
   }
+  if (tmp_address >= m_ram_size) {
+    log_error("Address 0x%X is out of scope, ram size is only 0x%X",
+              tmp_address,
+              m_ram_size);
+    tmp_address = mask_n_bits(std::log2(m_ram_size), tmp_address);
+  }
   return m_ram[tmp_address];
 }
 
@@ -208,10 +261,10 @@ MBC2_Handler::MBC2_Handler(uint8* data, header* header)
   : MBC_Handler(data, header)
 {
   // MBC2 always has a fixed ram size of 512 half bytes
-  m_ram = std::make_unique<uint8[]>(512);
+  m_ram_size = 512;
+  m_ram = std::make_unique<uint8[]>(m_ram_size);
   if (m_has_battery && m_ram) {
-    log_info("Loading from a save file");
-    // TODO implement restore from save
+    load();
   }
 }
 
@@ -245,6 +298,12 @@ MBC2_Handler::read_rom(uint16 address)
   uint16 tmp_address = address;
   if (address >= 0x4000) {
     tmp_address = (m_banking_bits << 14) | mask_n_bits(14, address);
+  }
+  if (tmp_address >= m_rom_size) {
+    log_error("Address 0x%X is out of scope, rom size is only 0x%X",
+              tmp_address,
+              m_rom_size);
+    tmp_address = mask_n_bits(std::log2(m_rom_size), tmp_address);
   }
   return m_data[tmp_address];
 }

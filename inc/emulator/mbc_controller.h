@@ -17,6 +17,8 @@ public:
 protected:
   uint8* m_data = nullptr;
   std::unique_ptr<uint8[]> m_ram = nullptr;
+  uint32 m_ram_size = 0;
+  uint32 m_rom_size = 0;
   header* m_header = nullptr;
   bool m_has_battery = false;
   bool m_enabled_ram = false;
@@ -25,6 +27,8 @@ protected:
   virtual void write_ram(uint16 address, uint8 val) = 0;
   virtual uint8 read_rom(uint16 address) = 0;
   virtual uint8 read_ram(uint16 address) = 0;
+  void save();
+  void load();
 };
 
 class NoMBC_Handler : public MBC_Handler
