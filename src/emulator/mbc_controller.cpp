@@ -19,6 +19,11 @@ MBC_Handler::CreateHandler(Cartridge* cartridge)
       handler = std::make_unique<MBC1_Handler>(data, cartridge_header);
       log_info("Created an MBC1 handler");
       break;
+    case MBC2:
+    case MBC2B:
+      handler = std::make_unique<MBC2_Handler>(data, cartridge_header);
+      log_info("Created an MBC2 handler");
+      break;
     default:
       log_error("Attempting to create an unsupported MBC handler of type 0x%X",
                 cartridge_header->type);
@@ -197,4 +202,59 @@ MBC1_Handler::read_ram(uint16 address)
     tmp_address = (m_high_banking_bits << 13) | tmp_address;
   }
   return m_ram[tmp_address];
+}
+
+MBC2_Handler::MBC2_Handler(uint8* data, header* header)
+  : MBC_Handler(data, header)
+{
+  // MBC2 always has a fixed ram size of 512 half bytes
+  m_ram = std::make_unique<uint8[]>(512);
+  if (m_has_battery && m_ram) {
+    log_info("Loading from a save file");
+    // TODO implement restore from save
+  }
+}
+
+void
+MBC2_Handler::write_rom(uint16 address, uint8 val)
+{
+  if ((address & (1 << 8)) != 0) {
+    uint8 tmpVal = mask_n_bits(4, val);
+    m_banking_bits = tmpVal != 0 ? tmpVal : 1;
+    log_info("Set m_banking_bits to 0x%X", m_banking_bits);
+  } else {
+    m_enabled_ram = mask_n_bits(4, val) == 0xA;
+    log_info("Set m_enable_ram to %d", m_enabled_ram);
+  }
+}
+
+void
+MBC2_Handler::write_ram(uint16 address, uint8 val)
+{
+  if (!m_enabled_ram) {
+    log_error("Called write to ram for MBC2 that hasn't enabled it");
+    return;
+  }
+  uint32 tmp_address = mask_n_bits(9, address);
+  m_ram[tmp_address] = val;
+}
+
+uint8
+MBC2_Handler::read_rom(uint16 address)
+{
+  uint16 tmp_address = address;
+  if (address >= 0x4000) {
+    tmp_address = (m_banking_bits << 14) | mask_n_bits(14, address);
+  }
+  return m_data[tmp_address];
+}
+
+uint8
+MBC2_Handler::read_ram(uint16 address)
+{
+  if (!m_ram || !m_enabled_ram) {
+    log_error("Called read from ram for MBC2 that hasn't enabled it");
+    return 0xFF;
+  }
+  return m_ram[mask_n_bits(9, address)];
 }

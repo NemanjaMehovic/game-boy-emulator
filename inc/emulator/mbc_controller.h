@@ -62,4 +62,19 @@ private:
   bool m_is_mbc1m = false;
 };
 
+class MBC2_Handler : public MBC_Handler
+{
+public:
+  MBC2_Handler(uint8* data, header* header);
+
+protected:
+  virtual void write_rom(uint16 address, uint8 val) override;
+  virtual void write_ram(uint16 address, uint8 val) override;
+  virtual uint8 read_rom(uint16 address) override;
+  virtual uint8 read_ram(uint16 address) override;
+
+private:
+  uint8 m_banking_bits = 0;
+};
+
 #endif // MBC_CONTROLLER_H
