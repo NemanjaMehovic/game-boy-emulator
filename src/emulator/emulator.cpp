@@ -8,6 +8,7 @@ Emulator::Emulator(std::string file)
   if (!m_cartridge->isValidCartridge()) {
     log_error("Failed to create a cartridge with %s", file.c_str());
   }
+  m_cpu = std::make_unique<CPU>();
 }
 
 bool

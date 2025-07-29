@@ -5,6 +5,7 @@
 #include <string>
 
 #include "cartridge.h"
+#include "cpu.h"
 
 class Emulator
 {
@@ -15,6 +16,7 @@ public:
 
 private:
   std::unique_ptr<Cartridge> m_cartridge;
+  std::unique_ptr<CPU> m_cpu;
 };
 
 #endif // EMULATOR_H
