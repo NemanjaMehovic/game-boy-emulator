@@ -56,8 +56,14 @@ CPU::setRegister(uint16& reg, uint16 val, RegisterBits register_bits)
     case RegisterBits::High:
       reg = (reg & 0x00FF) | (val << 8);
       break;
-    case RegisterBits::Low: 
-      reg = (reg & 0xFF00) | (val & 0x00FF);
+    case RegisterBits::Low:
+      if (&reg == &AF) {
+        // special handling of F register
+        // lowest 4 bits don't exist
+        reg = (reg & 0xFF00) | (val & 0x00F0);
+      } else {
+        reg = (reg & 0xFF00) | (val & 0x00FF);
+      }
       break;
     case RegisterBits::Full:
       reg = val;
@@ -76,6 +82,21 @@ CPU::readRegister(uint16& reg, RegisterBits register_bits)
     case RegisterBits::Full:
       return reg;
   }
+}
+
+void
+CPU::setFlag(FlagBits flag, bool value)
+{
+  if (value) {
+    AF |= static_cast<uint16>(flag);
+  } else {
+    AF &= ~static_cast<uint16>(flag);
+  }
+}
+
+bool CPU::getFlag(FlagBits flag)
+{
+  return (AF & static_cast<uint16>(flag)) != 0;
 }
 
 // load instructions
@@ -372,133 +393,350 @@ CPU::ld_r8_ar16d(uint16& regD, CPU::RegisterBits regDB, uint16& regS)
 void
 CPU::adc_r8(uint16& regS, CPU::RegisterBits regSB)
 {
-  // TODO
+  uint8 val1 = readRegister(AF, RegisterBits::High);
+  uint8 val2 = readRegister(regS, regSB);
+  uint8 carry = getFlag(FlagBits::Carry) ? 1 : 0;
+  uint8 result = val1 + val2 + carry;
+  setRegister(AF, result, RegisterBits::High);
+  setFlag(FlagBits::Zero, result == 0);
+  setFlag(FlagBits::Subtract, false);
+  setFlag(FlagBits::HalfCarry, ((val1 & 0x0F) + (val2 & 0x0F) + carry) > 0x0F);
+  setFlag(FlagBits::Carry, (val1 + val2 + carry) > 0xFF);
+  next();
 }
 
 void
 CPU::adc_ar16(uint16& regS)
 {
-  // TODO
+  switch (instruction_cycles) {
+    case 0:
+      read(regS);
+      instruction_cycles++;
+      break;
+    case 1:
+      uint16 tmp = ioData;
+      adc_r8(tmp, RegisterBits::Low); // next is called in adc_r8
+      instruction_cycles = 0;
+      break;
+  }
 }
 
 void
 CPU::adc_n8()
 {
-  // TODO
+  switch (instruction_cycles) {
+    case 0:
+      instruction_cycles++;
+      next();
+      break;
+    case 1:
+      uint16 tmp = ioData;
+      adc_r8(tmp, RegisterBits::Low); // next is called in adc_r8
+      instruction_cycles = 0;
+      break;
+  }
 }
 
 void
 CPU::add_r8(uint16& regS, CPU::RegisterBits regSB)
 {
-  // TODO
+  uint8 val1 = readRegister(AF, RegisterBits::High);
+  uint8 val2 = readRegister(regS, regSB);
+  uint8 result = val1 + val2;
+  setRegister(AF, result, RegisterBits::High);
+  setFlag(FlagBits::Zero, result == 0);
+  setFlag(FlagBits::Subtract, false);
+  setFlag(FlagBits::HalfCarry, ((val1 & 0x0F) + (val2 & 0x0F)) > 0x0F);
+  setFlag(FlagBits::Carry, (val1 + val2) > 0xFF);
+  next();
 }
 
 void
 CPU::add_ar16(uint16& regS)
 {
-  // TODO
+  switch (instruction_cycles) {
+    case 0:
+      read(regS);
+      instruction_cycles++;
+      break;
+    case 1:
+      uint16 tmp = ioData;
+      add_r8(tmp, RegisterBits::Low); // next is called in add_r8
+      instruction_cycles = 0;
+      break;
+  }
 }
 
 void
 CPU::add_n8()
 {
-  // TODO
+  switch (instruction_cycles) {
+    case 0:
+      instruction_cycles++;
+      next();
+      break;
+    case 1:
+      uint16 tmp = ioData;
+      add_r8(tmp, RegisterBits::Low); // next is called in add_r8
+      instruction_cycles = 0;
+      break;
+  }
 }
 
 void
 CPU::cp_r8(uint16& regS, CPU::RegisterBits regSB)
 {
-  // TODO
+  uint8 val1 = readRegister(AF, RegisterBits::High);
+  uint8 val2 = readRegister(regS, regSB);
+  setFlag(FlagBits::Zero, val1 == val2);
+  setFlag(FlagBits::Subtract, true);
+  setFlag(FlagBits::HalfCarry, (val1 & 0x0F) < (val2 & 0x0F));
+  setFlag(FlagBits::Carry, val1 < val2);
+  next();
 }
 
 void
 CPU::cp_ar16(uint16& regS)
 {
-  // TODO
+  switch (instruction_cycles) {
+    case 0:
+      read(regS);
+      instruction_cycles++;
+      break;
+    case 1:
+      uint16 tmp = ioData;
+      cp_r8(tmp, RegisterBits::Low); // next is called in cp_r8
+      instruction_cycles = 0;
+      break;
+  }
 }
 
 void
 CPU::cp_n8()
 {
-  // TODO
+  switch (instruction_cycles) {
+    case 0:
+      instruction_cycles++;
+      next();
+      break;
+    case 1:
+      uint16 tmp = ioData;
+      cp_r8(tmp, RegisterBits::Low); // next is called in cp_r8
+      instruction_cycles = 0;
+      break;
+  }
 }
 
 void
 CPU::dec_r8(uint16& regS, CPU::RegisterBits regSB)
 {
-  // TODO
+  uint8 val = readRegister(regS, regSB);
+  uint8 result = val - 1;
+  setRegister(regS, result, regSB);
+  setFlag(FlagBits::Zero, result == 0);
+  setFlag(FlagBits::Subtract, true);
+  setFlag(FlagBits::HalfCarry, (val & 0x0F) == 0);
+  next();
 }
 
 void
 CPU::dec_ar16(uint16& regS)
 {
-  // TODO
+  switch (instruction_cycles) {
+    case 0:
+      read(regS);
+      instruction_cycles++;
+      break;
+    case 1:
+      write(regS, ioData - 1);
+      setFlag(FlagBits::Zero, ioData == 1);
+      setFlag(FlagBits::Subtract, true);
+      setFlag(FlagBits::HalfCarry, (ioData & 0x0F) == 0);
+      instruction_cycles++;
+      break;
+    case 2:
+      instruction_cycles = 0;
+      next();
+      break;
+  }
 }
 
 void
 CPU::inc_r8(uint16& regS, CPU::RegisterBits regSB)
 {
-  // TODO
+  uint8 val = readRegister(regS, regSB);
+  uint8 result = val + 1;
+  setRegister(regS, result, regSB);
+  setFlag(FlagBits::Zero, result == 0);
+  setFlag(FlagBits::Subtract, false);
+  setFlag(FlagBits::HalfCarry, (val & 0x0F) == 0x0F);
+  next();
 }
 
 void
 CPU::inc_ar16(uint16& regS)
 {
-  // TODO
+  switch (instruction_cycles) {
+    case 0:
+      read(regS);
+      instruction_cycles++;
+      break;
+    case 1:
+      write(regS, ioData + 1);
+      setFlag(FlagBits::Zero, ioData == 0xFF);
+      setFlag(FlagBits::Subtract, true);
+      setFlag(FlagBits::HalfCarry, (ioData & 0x0F) == 0x0F);
+      instruction_cycles++;
+      break;
+    case 2:
+      instruction_cycles = 0;
+      next();
+      break;
+  }
 }
 
 void
 CPU::sbc_r8(uint16& regS, CPU::RegisterBits regSB)
 {
-  // TODO
+  uint8 val1 = readRegister(AF, RegisterBits::High);
+  uint8 val2 = readRegister(regS, regSB);
+  uint8 carry = getFlag(FlagBits::Carry) ? 1 : 0;
+  uint8 result = val1 - val2 - carry;
+  setRegister(AF, result, RegisterBits::High);
+  setFlag(FlagBits::Zero, result == 0);
+  setFlag(FlagBits::Subtract, true);
+  setFlag(FlagBits::HalfCarry, (val1 & 0x0F) < ((val2 & 0x0F) + carry));
+  setFlag(FlagBits::Carry, val1 < (val2 + carry));
+  next();
 }
 
 void
 CPU::sbc_ar16(uint16& regS)
 {
-  // TODO
+  switch (instruction_cycles) {
+    case 0:
+      read(regS);
+      instruction_cycles++;
+      break;
+    case 1:
+      uint16 tmp = ioData;
+      sbc_r8(tmp, RegisterBits::Low); // next is called in sbc_r8
+      instruction_cycles = 0;
+      break;
+  }
 }
 
 void
 CPU::sbc_n8()
 {
-  // TODO
+  switch (instruction_cycles) {
+    case 0:
+      instruction_cycles++;
+      next();
+      break;
+    case 1:
+      uint16 tmp = ioData;
+      sbc_r8(tmp, RegisterBits::Low); // next is called in sbc_r8
+      instruction_cycles = 0;
+      break;
+  }
 }
 
 void
 CPU::sub_r8(uint16& regS, CPU::RegisterBits regSB)
 {
-  // TODO
+  uint8 val1 = readRegister(AF, RegisterBits::High);
+  uint8 val2 = readRegister(regS, regSB);
+  uint8 result = val1 - val2;
+  setRegister(AF, result, RegisterBits::High);
+  setFlag(FlagBits::Zero, result == 0);
+  setFlag(FlagBits::Subtract, true);
+  setFlag(FlagBits::HalfCarry, (val1 & 0x0F) < (val2 & 0x0F));
+  setFlag(FlagBits::Carry, val1 < val2);
+  next();
 }
 
 void
 CPU::sub_ar16(uint16& regS)
 {
-  // TODO
+  switch (instruction_cycles) {
+    case 0:
+      read(regS);
+      instruction_cycles++;
+      break;
+    case 1:
+      uint16 tmp = ioData;
+      sub_r8(tmp, RegisterBits::Low); // next is called in sub_r8
+      instruction_cycles = 0;
+      break;
+  }
 }
 
 void
 CPU::sub_n8()
 {
-  // TODO
+  switch (instruction_cycles) {
+    case 0:
+      instruction_cycles++;
+      next();
+      break;
+    case 1:
+      uint16 tmp = ioData;
+      sub_r8(tmp, RegisterBits::Low); // next is called in sub_r8
+      instruction_cycles = 0;
+      break;
+  }
 }
 
 void
 CPU::add_r16_r16(uint16& regD, uint16& regS)
 {
-  // TODO
+  switch (instruction_cycles) {
+    case 0:
+      uint16 val1 = readRegister(regD, RegisterBits::Full);
+      uint16 val2 = readRegister(regS, RegisterBits::Full);
+      uint16 result = val1 + val2;
+      setRegister(regD, result, RegisterBits::Full);
+      setFlag(FlagBits::Zero, result == 0);
+      setFlag(FlagBits::HalfCarry, ((val1 & 0x0FFF) + (val2 & 0x0FFF)) > 0x0FFF);
+      setFlag(FlagBits::Carry, (val1 + val2) > 0xFFFF);
+      instruction_cycles++;
+      break;
+    case 1:
+      instruction_cycles = 0;
+      next();
+      break;
+  }
 }
 
 void
 CPU::dec_r16(uint16& regS)
 {
-  // TODO
+  switch (instruction_cycles) {
+    case 0:
+      iduDec(regS);
+      instruction_cycles++;
+      break;
+    case 1:
+      instruction_cycles = 0;
+      next();
+      break;
+  }
 }
 
 void
 CPU::inc_r16(uint16& regS)
 {
-  // TODO
+  switch (instruction_cycles) {
+    case 0:
+      iduInc(regS);
+      instruction_cycles++;
+      break;
+    case 1:
+      instruction_cycles = 0;
+      next();
+      break;
+  }
 }
 
 // bitwise logic instructions
