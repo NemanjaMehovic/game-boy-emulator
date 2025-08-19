@@ -22,7 +22,60 @@ CPU::initialize()
 void
 CPU::cycle()
 {
-  // Implementation of the CPU cycle logic goes here
+  if(instruction_cycles == 0) {
+    current_instruction = opcode_map.at(ioData);
+  }
+  current_instruction();
+}
+
+void
+CPU::iduInc(uint16& reg, uint16 value)
+{
+  reg += value;
+  // need to handle OAM Bug
+}
+
+void
+CPU::iduDec(uint16& reg, uint16 value)
+{
+  reg -= value;
+  // need to handle OAM Bug
+}
+
+void
+CPU::next()
+{
+  iduInc(PC);
+  read(PC);
+}
+
+void
+CPU::setRegister(uint16& reg, uint16 val, RegisterBits register_bits)
+{
+  switch (register_bits) {
+    case RegisterBits::High:
+      reg = (reg & 0x00FF) | (val << 8);
+      break;
+    case RegisterBits::Low: 
+      reg = (reg & 0xFF00) | (val & 0x00FF);
+      break;
+    case RegisterBits::Full:
+      reg = val;
+      break;
+  }
+}
+
+uint16
+CPU::readRegister(uint16& reg, RegisterBits register_bits)
+{
+  switch (register_bits) {
+    case RegisterBits::High:
+      return (reg >> 8) & 0x00FF;
+    case RegisterBits::Low:
+      return reg & 0x00FF;
+    case RegisterBits::Full:
+      return reg;
+  }
 }
 
 // load instructions
@@ -32,49 +85,139 @@ CPU::ld_r8_r8(uint16& regD,
               uint16& regS,
               CPU::RegisterBits regSB)
 {
-  // TODO
+  uint16 sourceValue = readRegister(regS, regSB);
+  setRegister(regD, sourceValue, regDB);
+  next();
 }
 
 void
 CPU::ld_r8_n8(uint16& regD, CPU::RegisterBits regB)
 {
-  // TODO
+  switch (instruction_cycles) {
+    case 0:
+      instruction_cycles++;
+      next();
+      break;
+    case 1:
+      setRegister(regD, ioData, regB);
+      next();
+      instruction_cycles = 0;
+      break;
+  }
 }
 
 void
 CPU::ld_r16_n16(uint16& regD)
 {
-  // TODO
+  switch (instruction_cycles) {
+    case 0:
+      instruction_cycles++;
+      next();
+      break;
+    case 1:
+      lowByte = ioData;
+      instruction_cycles++;
+      next();
+      break;
+    case 2:
+      setRegister(regD, (ioData << 8) | lowByte, RegisterBits::Full);
+      next();
+      instruction_cycles = 0;
+      break;
+  }
 }
 
 void
 CPU::ld_ar16_r8(uint16& regD, uint16& regS, CPU::RegisterBits regSB)
 {
-  // TODO
+  switch (instruction_cycles) {
+    case 0:
+      write(regD, (uint8) readRegister(regS, regSB));
+      instruction_cycles++;
+      break;
+    case 1:
+      next();
+      instruction_cycles = 0;
+      break;
+  }
 }
 
 void
 CPU::ld_ar16_n8(uint16& regD)
 {
-  // TODO
+  switch (instruction_cycles) {
+    case 0 :
+      instruction_cycles++;
+      next();
+      break;
+    case 1:
+      write(regD, ioData);
+      instruction_cycles++;
+      break;
+    case 2:
+      next();
+      instruction_cycles = 0;
+      break;
+  }
 }
 
 void
 CPU::ld_r8_ar16(uint16& regD, CPU::RegisterBits regDB, uint16& regS)
 {
-  // TODO
+  switch (instruction_cycles) {
+    case 0:
+      read(regS);
+      instruction_cycles++;
+      break;
+    case 1:
+      setRegister(regD, ioData, regDB);
+      instruction_cycles = 0;
+      next();
+      break;
+  }
 }
 
 void
 CPU::ld_a16_r8(uint16& regS, CPU::RegisterBits regSB)
 {
-  // TODO
+  switch (instruction_cycles) {
+    case 0:
+      instruction_cycles++;
+      next();
+      break;
+    case 1:
+      lowByte = ioData;
+      instruction_cycles++;
+      next();
+      break;
+    case 2:
+      write((ioData << 8) | lowByte, (uint8) readRegister(regS, regSB));
+      instruction_cycles ++;
+      break;
+    case 3:
+      instruction_cycles = 0;
+      next();
+      break;
+  }
 }
 
 void
 CPU::ldh_a8_r8(uint16& regS, CPU::RegisterBits regSB)
 {
-  // TODO
+  switch (instruction_cycles) {
+    case 0:
+      instruction_cycles++;
+      next();
+      break;
+    case 1:
+      write(0xFF00 + ioData, (uint8) readRegister(regS, regSB));
+      instruction_cycles++;
+      break;
+    case 2:
+      instruction_cycles = 0;
+      next();
+      break;
+  }
 }
 
 void
@@ -83,19 +226,61 @@ CPU::ldh_ar8_r8(uint16& regD,
                 uint16& regS,
                 CPU::RegisterBits regSB)
 {
-  // TODO
+  switch (instruction_cycles) {
+    case 0:
+      write(0xFF00 + readRegister(regD, regDB), (uint8) readRegister(regS, regSB));
+      instruction_cycles++;
+      break;
+    case 1:
+      instruction_cycles=0;
+      next();
+      break;
+  }
 }
 
 void
 CPU::ld_r8_a16(uint16& regD, CPU::RegisterBits regDB)
 {
-  // TODO
+  switch (instruction_cycles) {
+    case 0:
+      instruction_cycles++;
+      next();
+      break;
+    case 1:
+      lowByte = ioData;
+      instruction_cycles++;
+      next();
+      break;
+    case 2:
+      read((ioData << 8) | lowByte);
+      instruction_cycles++;
+      break;
+    case 3:
+      setRegister(regD, ioData, regDB);
+      instruction_cycles = 0;
+      next();
+      break;
+  }
 }
 
 void
 CPU::ldh_r8_a8(uint16& regD, CPU::RegisterBits regDB)
 {
-  // TODO
+  switch (instruction_cycles) {
+    case 0:
+      instruction_cycles++;
+      next();
+      break;
+    case 1:
+      read(0xFF00 + ioData);
+      instruction_cycles++;
+      break;
+    case 2:
+      setRegister(regD, ioData, regDB);
+      instruction_cycles = 0;
+      next();
+      break;
+  }
 }
 
 void
@@ -104,31 +289,83 @@ CPU::ldh_r8_ar8(uint16& regD,
                 uint16& regS,
                 CPU::RegisterBits regSB)
 {
-  // TODO
+  switch (instruction_cycles) {
+    case 0:
+      read(0xFF00 + readRegister(regS, regSB));
+      instruction_cycles++;
+      break;
+    case 1:
+      setRegister(regD, ioData, regDB);
+      instruction_cycles = 0;
+      next();
+      break;
+  }
 }
 
 void
 CPU::ld_ar16i_r8(uint16& regD, uint16& regS, CPU::RegisterBits regSB)
 {
-  // TODO
+  switch (instruction_cycles) {
+    case 0:
+      write(regD, (uint8) readRegister(regS, regSB));
+      iduInc(regD);
+      instruction_cycles++;
+      break;
+    case 1:
+      instruction_cycles = 0;
+      next();
+      break;
+  }
 }
 
 void
 CPU::ld_ar16d_r8(uint16& regD, uint16& regS, CPU::RegisterBits regSB)
 {
-  // TODO
+  switch (instruction_cycles) {
+    case 0:
+      write(regD, (uint8) readRegister(regS, regSB));
+      iduDec(regD);
+      instruction_cycles++;
+      break;
+    case 1:
+      instruction_cycles = 0;
+      next();
+      break;
+  }
 }
 
 void
-CPU::ld_r8_ar16i(uint16& regD, CPU::RegisterBits regSD, uint16& regS)
+CPU::ld_r8_ar16i(uint16& regD, CPU::RegisterBits regDB, uint16& regS)
 {
-  // TODO
+  switch (instruction_cycles) {
+    case 0:
+      read(regS);
+      iduInc(regS);
+      instruction_cycles++;
+      break;
+    case 1:
+      setRegister(regD, ioData, regDB);
+      instruction_cycles = 0;
+      next();
+      break;
+  }
 }
 
 void
-CPU::ld_r8_ar16d(uint16& regD, CPU::RegisterBits regSD, uint16& regS)
+CPU::ld_r8_ar16d(uint16& regD, CPU::RegisterBits regDB, uint16& regS)
 {
-  // TODO
+  switch (instruction_cycles) {
+    case 0:
+      read(regS);
+      iduDec(regS);
+      instruction_cycles++;
+      break;
+    case 1:
+      setRegister(regD, ioData, regDB);
+      instruction_cycles = 0;
+      next();
+      break;
+  }
 }
 
 // arithmetic instructions
@@ -628,7 +865,7 @@ CPU::daa()
 void
 CPU::nop()
 {
-  // TODO
+  next();
 }
 
 void

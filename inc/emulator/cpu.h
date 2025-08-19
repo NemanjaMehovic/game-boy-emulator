@@ -12,19 +12,6 @@ public:
     CPU();
 private:
 
-    uint16 AF = 0x01B0;
-    uint16 BC = 0x0013;
-    uint16 DE = 0x00D8;
-    uint16 HL = 0x014D;
-    uint16 SP = 0xFFFE;
-    uint16 PC = 0x0100;
-
-    uint32 instruction_cycles = 0;
-    bool use_prefix_instruction = false;
-
-    void initialize();
-    void cycle();
-
     enum class RegisterBits {
         High,
         Low,
@@ -45,6 +32,35 @@ private:
         NotCarry
     };
 
+    uint16 AF = 0x01B0;
+    uint16 BC = 0x0013;
+    uint16 DE = 0x00D8;
+    uint16 HL = 0x014D;
+    uint16 SP = 0xFFFE;
+    uint16 PC = 0x0100;
+
+    uint32 instruction_cycles = 0;
+    bool use_prefix_instruction = false;
+    uint8 ioData = 0;
+    uint8 lowByte = 0;
+    std::function<void()> current_instruction;
+
+    void initialize();
+    void cycle();
+    void iduInc(uint16& reg, uint16 value = 1);
+    void iduDec(uint16& reg, uint16 value = 1);
+
+    void read(uint16 addr);
+    void write(uint16 addr, uint8 val);
+
+    void next();
+    
+    void setRegister(uint16& reg, uint16 val, RegisterBits register_bits);
+    uint16 readRegister(uint16& reg, RegisterBits register_bits);
+
+    void setFlag(FlagBits flag, bool value);
+    bool getFlag(FlagBits flag);
+
     // load instructions
     void ld_r8_r8(uint16& regD, RegisterBits regDB, uint16& regS, RegisterBits regSB);
     void ld_r8_n8(uint16& regD, RegisterBits regB);
@@ -60,8 +76,8 @@ private:
     void ldh_r8_ar8(uint16& regD, RegisterBits regDB, uint16& regS, RegisterBits regSB);
     void ld_ar16i_r8(uint16& regD, uint16& regS, RegisterBits regSB);
     void ld_ar16d_r8(uint16& regD, uint16& regS, RegisterBits regSB);
-    void ld_r8_ar16i(uint16& regD,  RegisterBits regSD, uint16& regS);
-    void ld_r8_ar16d(uint16& regD,  RegisterBits regSD, uint16& regS);
+    void ld_r8_ar16i(uint16& regD,  RegisterBits regDB, uint16& regS);
+    void ld_r8_ar16d(uint16& regD,  RegisterBits regDB, uint16& regS);
 
     // arithmetic instructions
     void adc_r8(uint16& regS, RegisterBits regSB);
@@ -429,12 +445,6 @@ private:
         {0xFE, std::bind(&CPU::cp_n8, this)},
         {0xFF, std::bind(&CPU::rst, this)}           
     };
-
-    void setRegister(uint16& reg, uint8 val, RegisterBits register_bits);
-    uint16 readRegister(uint16& reg, RegisterBits register_bits);
-
-    void setFlag(FlagBits flag, bool value);
-    bool getFlag(FlagBits flag);
 };
 
 
