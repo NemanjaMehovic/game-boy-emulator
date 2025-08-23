@@ -32,6 +32,12 @@ private:
         NotCarry
     };
 
+    enum class Ime {
+        Enable,
+        Disable,
+        PendingEnable
+    };
+
     uint16 AF = 0x01B0;
     uint16 BC = 0x0013;
     uint16 DE = 0x00D8;
@@ -41,8 +47,11 @@ private:
 
     uint32 instruction_cycles = 0;
     bool use_prefix_instruction = false;
+    Ime ime = Ime::Disable;
     uint8 ioData = 0;
+    uint8 highByte = 0;
     uint8 lowByte = 0;
+    uint8 curr_opcode = 0;
     std::function<void()> current_instruction;
 
     void initialize();
@@ -60,6 +69,8 @@ private:
 
     void setFlag(FlagBits flag, bool value);
     bool getFlag(FlagBits flag);
+
+    bool checkCondition(Condition flag);
 
     // load instructions
     void ld_r8_r8(uint16& regD, RegisterBits regDB, uint16& regS, RegisterBits regSB);
@@ -116,12 +127,12 @@ private:
     void xor_n8();
 
     // bit manipulation instructions
-    void bit_r8(uint16& regS, RegisterBits regSB);
-    void bit_ar16(uint16& regS);
-    void res_r8(uint16& regS, RegisterBits regSB);
-    void res_ar16(uint16& regS);
-    void set_r8(uint16& regS, RegisterBits regSB);
-    void set_ar16(uint16& regS);
+    void bit_r8(uint16& regS, RegisterBits regSB, uint8 bit);
+    void bit_ar16(uint16& regS, uint8 bit);
+    void res_r8(uint16& regS, RegisterBits regSB, uint8 bit);
+    void res_ar16(uint16& regS, uint8 bit);
+    void set_r8(uint16& regS, RegisterBits regSB, uint8 bit);
+    void set_ar16(uint16& regS, uint8 bit);
 
     // bit shift instructions
     void rl_r8(uint16& regS, RegisterBits regSB);

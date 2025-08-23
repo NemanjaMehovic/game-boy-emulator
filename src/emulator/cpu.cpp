@@ -29,6 +29,7 @@ CPU::cycle()
       abort();
     }
     current_instruction = opcode_map.at(ioData);
+    curr_opcode = ioData;
   }
   current_instruction();
 }
@@ -64,7 +65,13 @@ CPU::setRegister(uint16& reg, uint16 val, RegisterBits register_bits)
       }
       break;
     case RegisterBits::Full:
-      reg = val;
+      if (&reg == &AF) {
+        // special handling of F register
+        // lowest 4 bits don't exist
+        reg = val & 0xFFF0;
+      } else {
+        reg = val;
+      }
       break;
   }
 }
@@ -95,4 +102,18 @@ CPU::setFlag(FlagBits flag, bool value)
 bool CPU::getFlag(FlagBits flag)
 {
   return (AF & static_cast<uint16>(flag)) != 0;
+}
+
+bool CPU::checkCondition(Condition flag)
+{
+  switch (flag) {
+    case Condition::Zero:
+      return getFlag(FlagBits::Zero);
+    case Condition::NotZero:
+      return !getFlag(FlagBits::Zero);
+    case Condition::Carry:
+      return getFlag(FlagBits::Carry);
+    case Condition::NotCarry:
+      return !getFlag(FlagBits::Carry);
+  }
 }
