@@ -1733,7 +1733,7 @@ void
 CPU::ei()
 {
   if (ime == Ime::Disable) {
-    ime = Ime::PendingEnable;
+    ime = Ime::RequestEnable;
   }
   next();
 }
@@ -1741,7 +1741,14 @@ CPU::ei()
 void
 CPU::halt()
 {
-  // TODO
+  halted = getInterrupts() == 0;
+  instruction_cycles = 0;
+  read(PC);
+
+  if(ime != Ime::Enable && !halted) {
+    return;
+  }
+  iduInc(PC);
 }
 
 void
@@ -1789,5 +1796,6 @@ CPU::stop()
 void
 CPU::prefix_cb()
 {
-  // TODO
+  use_prefix_instruction = true;
+  next();
 }

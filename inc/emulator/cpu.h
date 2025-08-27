@@ -10,6 +10,7 @@ class CPU
 {
 public:
     CPU();
+    void tick(uint64 Tcycle);
 private:
 
     enum class RegisterBits {
@@ -35,7 +36,8 @@ private:
     enum class Ime {
         Enable,
         Disable,
-        PendingEnable
+        PendingEnable,
+        RequestEnable
     };
 
     uint16 AF = 0x01B0;
@@ -45,17 +47,23 @@ private:
     uint16 SP = 0xFFFE;
     uint16 PC = 0x0100;
 
-    uint32 instruction_cycles = 0;
-    bool use_prefix_instruction = false;
     Ime ime = Ime::Disable;
+    uint8 IER = 0;
+    uint8 IFR = 0xE1;
+
     uint8 ioData = 0;
     uint8 highByte = 0;
     uint8 lowByte = 0;
+
+    uint32 instruction_cycles = 0;
+    bool halted = false;
+    bool use_prefix_instruction = false;
     uint8 curr_opcode = 0;
     std::function<void()> current_instruction;
 
     void initialize();
     void cycle();
+    std::function<void()> fetchPrefixInstruction(uint8 opcode);
     void iduInc(uint16& reg, uint16 value = 1);
     void iduDec(uint16& reg, uint16 value = 1);
 
@@ -71,6 +79,8 @@ private:
     bool getFlag(FlagBits flag);
 
     bool checkCondition(Condition flag);
+    uint8 getInterrupts();
+    void serviceInterrupt();
 
     // load instructions
     void ld_r8_r8(uint16& regD, RegisterBits regDB, uint16& regS, RegisterBits regSB);

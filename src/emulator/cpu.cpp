@@ -7,6 +7,23 @@ CPU::CPU()
 }
 
 void
+CPU::tick(uint64 Tcycle)
+{
+  // 4 T-cycles = 1 M-cycle = 1 CPU cycle
+  switch (Tcycle % 4) {
+    case 0:
+      cycle();
+      break;
+    case 1:
+      break;
+    case 2:
+      break;
+    case 3:
+      break;
+  }
+}
+
+void
 CPU::initialize()
 {
   AF = 0x01B0;
@@ -18,20 +35,192 @@ CPU::initialize()
 
   instruction_cycles = 0;
   use_prefix_instruction = false;
+  curr_opcode = 0;
+  halted = false;
+
+  ime = Ime::Disable;
+  IER = 0;
+  IFR = 0xE1;
+
+  ioData = 0;
+  highByte = 0;
+  lowByte = 0;
 }
 
 void
 CPU::cycle()
 {
   if(instruction_cycles == 0) {
-    if (bad_opcodes.find(ioData) != bad_opcodes.end()) {
-      log_error("Bad opcode: 0x%02X", ioData);
-      abort();
+    
+    uint8 interrupts = getInterrupts();
+    if (interrupts != 0 && !use_prefix_instruction){
+      halted = false;
+      if (ime == Ime::Enable) {
+        current_instruction = std::bind(&CPU::serviceInterrupt, this);
+      }
     }
-    current_instruction = opcode_map.at(ioData);
+    
+    if (use_prefix_instruction) {
+      current_instruction = fetchPrefixInstruction(ioData);
+      use_prefix_instruction = false;
+    } else {
+      if (bad_opcodes.find(ioData) != bad_opcodes.end()) {
+        log_error("Bad opcode: 0x%02X", ioData);
+        abort();
+      }
+      current_instruction = opcode_map.at(ioData);
+    }
+    // not correct when servicing an interrupt
     curr_opcode = ioData;
   }
+
+  if (halted) {
+    return;
+  }
+
   current_instruction();
+
+  if(instruction_cycles == 0 && (ime == Ime::PendingEnable || ime == Ime::RequestEnable)) {
+    // ime will be enabled after the next instruction
+    if(ime == Ime::RequestEnable) {
+      ime == Ime::PendingEnable;
+    } else {
+      ime = Ime::Enable;
+    }
+  }
+}
+
+std::function<void()>
+CPU::fetchPrefixInstruction(uint8 opcode)
+{
+  std::function<void()> instr = nullptr;
+  uint16* reg = nullptr;
+  bool indirect = false;
+  CPU::RegisterBits reg_bits = CPU::RegisterBits::Full;
+
+  uint8 reg_val = opcode & 0x7;
+  uint8 index_val = (opcode >> 3) & 0x7;
+
+  switch (reg_val) {
+    case 0:
+      reg = &BC;
+      reg_bits = CPU::RegisterBits::High;
+      break;
+    case 1:
+      reg = &BC;
+      reg_bits = CPU::RegisterBits::Low;
+      break;
+    case 2:
+      reg = &DE;
+      reg_bits = CPU::RegisterBits::High;
+      break;
+    case 3:
+      reg = &DE;
+      reg_bits = CPU::RegisterBits::Low;
+      break;
+    case 4:
+      reg = &HL;
+      reg_bits = CPU::RegisterBits::High;
+      break;
+    case 5:
+      reg = &HL;
+      reg_bits = CPU::RegisterBits::Low;
+      break;
+    case 6:
+      reg = &HL;
+      indirect = true;
+      break;
+    case 7:
+      reg = &AF;
+      reg_bits = CPU::RegisterBits::High;
+      break;
+  }
+
+  switch (opcode & 0xC0) {
+    case 0x00:
+      switch (index_val) {
+        case 0:
+          if (indirect) {
+            instr = std::bind(&CPU::rlc_ar16, this, std::ref(*reg));
+          } else {
+            instr = std::bind(&CPU::rlc_r8, this, std::ref(*reg), reg_bits);
+          }
+          break;
+        case 1:
+          if (indirect) {
+            instr = std::bind(&CPU::rrc_ar16, this, std::ref(*reg));
+          } else {
+            instr = std::bind(&CPU::rrc_r8, this, std::ref(*reg), reg_bits);
+          }
+          break;
+        case 2:
+          if (indirect) {
+            instr = std::bind(&CPU::rl_ar16, this, std::ref(*reg));
+          } else {
+            instr = std::bind(&CPU::rl_r8, this, std::ref(*reg), reg_bits);
+          }
+          break;
+        case 3:
+          if (indirect) {
+            instr = std::bind(&CPU::rr_ar16, this, std::ref(*reg));
+          } else {
+            instr = std::bind(&CPU::rr_r8, this, std::ref(*reg), reg_bits);
+          }
+          break;
+        case 4:
+          if (indirect) {
+            instr = std::bind(&CPU::sla_ar16, this, std::ref(*reg));
+          } else {
+            instr = std::bind(&CPU::sla_r8, this, std::ref(*reg), reg_bits);
+          }
+          break;
+        case 5:
+          if (indirect) {
+            instr = std::bind(&CPU::sra_ar16, this, std::ref(*reg));
+          } else {
+            instr = std::bind(&CPU::sra_r8, this, std::ref(*reg), reg_bits);
+          }
+          break;
+        case 6:
+          if (indirect) {
+            instr = std::bind(&CPU::swap_ar16, this, std::ref(*reg));
+          } else {
+            instr = std::bind(&CPU::swap_r8, this, std::ref(*reg), reg_bits);
+          }
+          break;
+        case 7:
+          if (indirect) {
+            instr = std::bind(&CPU::srl_ar16, this, std::ref(*reg));
+          } else {  
+            instr = std::bind(&CPU::srl_r8, this, std::ref(*reg), reg_bits);
+          }
+          break;
+      }
+      break;
+    case 0x40:
+      if (indirect) {
+        instr = std::bind(&CPU::bit_ar16, this, std::ref(*reg), index_val);
+      } else {
+        instr = std::bind(&CPU::bit_r8, this, std::ref(*reg), reg_bits, index_val);
+      }
+      break;
+    case 0x80:
+      if (indirect) {
+        instr = std::bind(&CPU::res_ar16, this, std::ref(*reg), index_val);
+      } else {
+        instr = std::bind(&CPU::res_r8, this, std::ref(*reg), reg_bits, index_val);
+      }
+      break;
+    case 0xC0:
+      if (indirect) {
+        instr = std::bind(&CPU::set_ar16, this, std::ref(*reg), index_val);
+      } else {
+        instr = std::bind(&CPU::set_r8, this, std::ref(*reg), reg_bits, index_val);
+      }
+      break;
+  }
+  
+  return instr;
 }
 
 void
@@ -115,5 +304,58 @@ bool CPU::checkCondition(Condition flag)
       return getFlag(FlagBits::Carry);
     case Condition::NotCarry:
       return !getFlag(FlagBits::Carry);
+  }
+}
+
+uint8 CPU::getInterrupts()
+{
+  // only the first 5 bits are used
+  return IER & IFR & 0x1F;
+}
+
+void
+CPU::serviceInterrupt()
+{
+  const std::vector<std::pair<uint8, uint16>> interrupt_vectors = {
+      {0x01, 0x40}, // V-Blank
+      {0x02, 0x48}, // LCD STAT
+      {0x04, 0x50}, // Timer
+      {0x08, 0x58}, // Serial
+      {0x10, 0x60}  // Joypad
+  };
+  switch (instruction_cycles) {
+    case 0:
+      // interrupts should happen before the fetch of the next instruction
+      // but we alwayys fetch the next instruction at the end of the cycle
+      // so we need to decrement PC here to offset the increment as a little hack
+      PC -= 1;
+      instruction_cycles++;
+      break;
+    case 1:
+      iduDec(SP);
+      instruction_cycles++;
+      break;
+    case 2:
+      write(SP, (uint8) readRegister(PC, RegisterBits::High));
+      iduDec(SP);
+      instruction_cycles++;
+      break;
+    case 3:
+      write(SP, (uint8) readRegister(PC, RegisterBits::Low));
+      uint8 interrupts = getInterrupts();
+      for (const auto& [bit, vector] : interrupt_vectors) {
+        if ((interrupts & bit) != 0) {
+          // clear the interrupt flag
+          IFR &= ~bit;
+          setRegister(PC, vector, RegisterBits::Full);
+        }
+      }
+      instruction_cycles++;
+      break;
+    case 4:
+      ime = Ime::Disable;
+      instruction_cycles = 0;
+      next();
+      break;
   }
 }
