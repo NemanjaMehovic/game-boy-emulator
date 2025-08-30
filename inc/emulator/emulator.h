@@ -6,6 +6,8 @@
 
 #include "cartridge.h"
 #include "cpu.h"
+#include "mmu.h"
+#include "ppu.h"
 
 class Emulator
 {
@@ -17,6 +19,8 @@ public:
 private:
   std::unique_ptr<Cartridge> m_cartridge;
   std::unique_ptr<CPU> m_cpu;
+  std::unique_ptr<PPU> m_ppu;
+  std::unique_ptr<MMU> m_mmu;
 };
 
 #endif // EMULATOR_H

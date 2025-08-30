@@ -1,5 +1,6 @@
 #include "cpu.h"
 #include "common.h"
+#include "mmu.h"
 
 CPU::CPU()
 {
@@ -50,16 +51,16 @@ CPU::initialize()
 void
 CPU::cycle()
 {
-  if(instruction_cycles == 0) {
-    
+  if (instruction_cycles == 0) {
+
     uint8 interrupts = getInterrupts();
-    if (interrupts != 0 && !use_prefix_instruction){
+    if (interrupts != 0 && !use_prefix_instruction) {
       halted = false;
       if (ime == Ime::Enable) {
         current_instruction = std::bind(&CPU::serviceInterrupt, this);
       }
     }
-    
+
     if (use_prefix_instruction) {
       current_instruction = fetchPrefixInstruction(ioData);
       use_prefix_instruction = false;
@@ -80,9 +81,10 @@ CPU::cycle()
 
   current_instruction();
 
-  if(instruction_cycles == 0 && (ime == Ime::PendingEnable || ime == Ime::RequestEnable)) {
+  if (instruction_cycles == 0 &&
+      (ime == Ime::PendingEnable || ime == Ime::RequestEnable)) {
     // ime will be enabled after the next instruction
-    if(ime == Ime::RequestEnable) {
+    if (ime == Ime::RequestEnable) {
       ime == Ime::PendingEnable;
     } else {
       ime = Ime::Enable;
@@ -191,7 +193,7 @@ CPU::fetchPrefixInstruction(uint8 opcode)
         case 7:
           if (indirect) {
             instr = std::bind(&CPU::srl_ar16, this, std::ref(*reg));
-          } else {  
+          } else {
             instr = std::bind(&CPU::srl_r8, this, std::ref(*reg), reg_bits);
           }
           break;
@@ -201,25 +203,28 @@ CPU::fetchPrefixInstruction(uint8 opcode)
       if (indirect) {
         instr = std::bind(&CPU::bit_ar16, this, std::ref(*reg), index_val);
       } else {
-        instr = std::bind(&CPU::bit_r8, this, std::ref(*reg), reg_bits, index_val);
+        instr =
+          std::bind(&CPU::bit_r8, this, std::ref(*reg), reg_bits, index_val);
       }
       break;
     case 0x80:
       if (indirect) {
         instr = std::bind(&CPU::res_ar16, this, std::ref(*reg), index_val);
       } else {
-        instr = std::bind(&CPU::res_r8, this, std::ref(*reg), reg_bits, index_val);
+        instr =
+          std::bind(&CPU::res_r8, this, std::ref(*reg), reg_bits, index_val);
       }
       break;
     case 0xC0:
       if (indirect) {
         instr = std::bind(&CPU::set_ar16, this, std::ref(*reg), index_val);
       } else {
-        instr = std::bind(&CPU::set_r8, this, std::ref(*reg), reg_bits, index_val);
+        instr =
+          std::bind(&CPU::set_r8, this, std::ref(*reg), reg_bits, index_val);
       }
       break;
   }
-  
+
   return instr;
 }
 
@@ -227,14 +232,26 @@ void
 CPU::iduInc(uint16& reg, uint16 value)
 {
   reg += value;
-  // need to handle OAM Bug
+  // TODO handle OAM Bug
 }
 
 void
 CPU::iduDec(uint16& reg, uint16 value)
 {
   reg -= value;
-  // need to handle OAM Bug
+  // TODO handle OAM Bug
+}
+
+void
+CPU::read(uint16 addr)
+{
+  ioData = mmu->read(addr, Component::CPU);
+}
+
+void
+CPU::write(uint16 addr, uint8 val)
+{
+  mmu->write(addr, val, Component::CPU);
 }
 
 void
@@ -288,12 +305,14 @@ CPU::setFlag(FlagBits flag, bool value)
   }
 }
 
-bool CPU::getFlag(FlagBits flag)
+bool
+CPU::getFlag(FlagBits flag)
 {
   return (AF & static_cast<uint16>(flag)) != 0;
 }
 
-bool CPU::checkCondition(Condition flag)
+bool
+CPU::checkCondition(Condition flag)
 {
   switch (flag) {
     case Condition::Zero:
@@ -307,7 +326,8 @@ bool CPU::checkCondition(Condition flag)
   }
 }
 
-uint8 CPU::getInterrupts()
+uint8
+CPU::getInterrupts()
 {
   // only the first 5 bits are used
   return IER & IFR & 0x1F;
@@ -317,17 +337,18 @@ void
 CPU::serviceInterrupt()
 {
   const std::vector<std::pair<uint8, uint16>> interrupt_vectors = {
-      {0x01, 0x40}, // V-Blank
-      {0x02, 0x48}, // LCD STAT
-      {0x04, 0x50}, // Timer
-      {0x08, 0x58}, // Serial
-      {0x10, 0x60}  // Joypad
+    { 0x01, 0x40 }, // V-Blank
+    { 0x02, 0x48 }, // LCD STAT
+    { 0x04, 0x50 }, // Timer
+    { 0x08, 0x58 }, // Serial
+    { 0x10, 0x60 }  // Joypad
   };
   switch (instruction_cycles) {
     case 0:
       // interrupts should happen before the fetch of the next instruction
       // but we alwayys fetch the next instruction at the end of the cycle
-      // so we need to decrement PC here to offset the increment as a little hack
+      // so we need to decrement PC here to offset the increment as a little
+      // hack
       PC -= 1;
       instruction_cycles++;
       break;
@@ -336,15 +357,14 @@ CPU::serviceInterrupt()
       instruction_cycles++;
       break;
     case 2:
-      write(SP, (uint8) readRegister(PC, RegisterBits::High));
+      write(SP, (uint8)readRegister(PC, RegisterBits::High));
       iduDec(SP);
       instruction_cycles++;
       break;
     case 3:
-      write(SP, (uint8) readRegister(PC, RegisterBits::Low));
-      uint8 interrupts = getInterrupts();
+      write(SP, (uint8)readRegister(PC, RegisterBits::Low));
       for (const auto& [bit, vector] : interrupt_vectors) {
-        if ((interrupts & bit) != 0) {
+        if ((getInterrupts() & bit) != 0) {
           // clear the interrupt flag
           IFR &= ~bit;
           setRegister(PC, vector, RegisterBits::Full);

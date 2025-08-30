@@ -316,13 +316,14 @@ CPU::adc_r8(uint16& regS, CPU::RegisterBits regSB)
 void
 CPU::adc_ar16(uint16& regS)
 {
+  uint16 tmp = 0;
   switch (instruction_cycles) {
     case 0:
       read(regS);
       instruction_cycles++;
       break;
     case 1:
-      uint16 tmp = ioData;
+      tmp = ioData;
       adc_r8(tmp, RegisterBits::Low); // next is called in adc_r8
       instruction_cycles = 0;
       break;
@@ -332,13 +333,14 @@ CPU::adc_ar16(uint16& regS)
 void
 CPU::adc_n8()
 {
+  uint16 tmp = 0;
   switch (instruction_cycles) {
     case 0:
       instruction_cycles++;
       next();
       break;
     case 1:
-      uint16 tmp = ioData;
+      tmp = ioData;
       adc_r8(tmp, RegisterBits::Low); // next is called in adc_r8
       instruction_cycles = 0;
       break;
@@ -362,13 +364,14 @@ CPU::add_r8(uint16& regS, CPU::RegisterBits regSB)
 void
 CPU::add_ar16(uint16& regS)
 {
+  uint16 tmp = 0;
   switch (instruction_cycles) {
     case 0:
       read(regS);
       instruction_cycles++;
       break;
     case 1:
-      uint16 tmp = ioData;
+      tmp = ioData;
       add_r8(tmp, RegisterBits::Low); // next is called in add_r8
       instruction_cycles = 0;
       break;
@@ -378,13 +381,14 @@ CPU::add_ar16(uint16& regS)
 void
 CPU::add_n8()
 {
+  uint16 tmp = 0;
   switch (instruction_cycles) {
     case 0:
       instruction_cycles++;
       next();
       break;
     case 1:
-      uint16 tmp = ioData;
+      tmp = ioData;
       add_r8(tmp, RegisterBits::Low); // next is called in add_r8
       instruction_cycles = 0;
       break;
@@ -406,13 +410,14 @@ CPU::cp_r8(uint16& regS, CPU::RegisterBits regSB)
 void
 CPU::cp_ar16(uint16& regS)
 {
+  uint16 tmp = 0;
   switch (instruction_cycles) {
     case 0:
       read(regS);
       instruction_cycles++;
       break;
     case 1:
-      uint16 tmp = ioData;
+      tmp = ioData;
       cp_r8(tmp, RegisterBits::Low); // next is called in cp_r8
       instruction_cycles = 0;
       break;
@@ -422,13 +427,14 @@ CPU::cp_ar16(uint16& regS)
 void
 CPU::cp_n8()
 {
+  uint16 tmp = 0;
   switch (instruction_cycles) {
     case 0:
       instruction_cycles++;
       next();
       break;
     case 1:
-      uint16 tmp = ioData;
+      tmp = ioData;
       cp_r8(tmp, RegisterBits::Low); // next is called in cp_r8
       instruction_cycles = 0;
       break;
@@ -521,13 +527,14 @@ CPU::sbc_r8(uint16& regS, CPU::RegisterBits regSB)
 void
 CPU::sbc_ar16(uint16& regS)
 {
+  uint16 tmp = 0;
   switch (instruction_cycles) {
     case 0:
       read(regS);
       instruction_cycles++;
       break;
     case 1:
-      uint16 tmp = ioData;
+      tmp = ioData;
       sbc_r8(tmp, RegisterBits::Low); // next is called in sbc_r8
       instruction_cycles = 0;
       break;
@@ -537,13 +544,14 @@ CPU::sbc_ar16(uint16& regS)
 void
 CPU::sbc_n8()
 {
+  uint16 tmp = 0;
   switch (instruction_cycles) {
     case 0:
       instruction_cycles++;
       next();
       break;
     case 1:
-      uint16 tmp = ioData;
+      tmp = ioData;
       sbc_r8(tmp, RegisterBits::Low); // next is called in sbc_r8
       instruction_cycles = 0;
       break;
@@ -567,13 +575,14 @@ CPU::sub_r8(uint16& regS, CPU::RegisterBits regSB)
 void
 CPU::sub_ar16(uint16& regS)
 {
+  uint16 tmp = 0;
   switch (instruction_cycles) {
     case 0:
       read(regS);
       instruction_cycles++;
       break;
     case 1:
-      uint16 tmp = ioData;
+      tmp = ioData;
       sub_r8(tmp, RegisterBits::Low); // next is called in sub_r8
       instruction_cycles = 0;
       break;
@@ -583,13 +592,14 @@ CPU::sub_ar16(uint16& regS)
 void
 CPU::sub_n8()
 {
+  uint16 tmp = 0;
   switch (instruction_cycles) {
     case 0:
       instruction_cycles++;
       next();
       break;
     case 1:
-      uint16 tmp = ioData;
+      tmp = ioData;
       sub_r8(tmp, RegisterBits::Low); // next is called in sub_r8
       instruction_cycles = 0;
       break;
@@ -599,11 +609,14 @@ CPU::sub_n8()
 void
 CPU::add_r16_r16(uint16& regD, uint16& regS)
 {
+  uint16 val1 = 0;
+  uint16 val2 = 0;
+  uint16 result = 0;
   switch (instruction_cycles) {
     case 0:
-      uint16 val1 = readRegister(regD, RegisterBits::Full);
-      uint16 val2 = readRegister(regS, RegisterBits::Full);
-      uint16 result = val1 + val2;
+      val1 = readRegister(regD, RegisterBits::Full);
+      val2 = readRegister(regS, RegisterBits::Full);
+      result = val1 + val2;
       setRegister(regD, result, RegisterBits::Full);
       setFlag(FlagBits::Zero, result == 0);
       setFlag(FlagBits::HalfCarry, ((val1 & 0x0FFF) + (val2 & 0x0FFF)) > 0x0FFF);
@@ -665,13 +678,14 @@ CPU::and_r8(uint16& regS, CPU::RegisterBits regSB)
 void
 CPU::and_ar16(uint16& regS)
 {
+  uint16 tmp = 0;
   switch (instruction_cycles) {
     case 0:
       read(regS);
       instruction_cycles++;
       break;
     case 1:
-      uint16 tmp = ioData;
+      tmp = ioData;
       and_r8(tmp, RegisterBits::Low); // next is called in and_r8
       instruction_cycles = 0;
       break;
@@ -681,13 +695,14 @@ CPU::and_ar16(uint16& regS)
 void
 CPU::and_n8()
 {
+  uint16 tmp = 0;
   switch (instruction_cycles) {
     case 0:
       instruction_cycles++;
       next();
       break;
     case 1:
-      uint16 tmp = ioData;
+      tmp = ioData;
       and_r8(tmp, RegisterBits::Low); // next is called in and_r8
       instruction_cycles = 0;
       break;
@@ -722,13 +737,14 @@ CPU::or_r8(uint16& regS, CPU::RegisterBits regSB)
 void
 CPU::or_ar16(uint16& regS)
 {
+  uint16 tmp = 0;
   switch (instruction_cycles) {
     case 0:
       read(regS);
       instruction_cycles++;
       break;
     case 1:
-      uint16 tmp = ioData;
+      tmp = ioData;
       or_r8(tmp, RegisterBits::Low); // next is called in or_r8
       instruction_cycles = 0;
       break;
@@ -738,13 +754,14 @@ CPU::or_ar16(uint16& regS)
 void
 CPU::or_n8()
 {
+  uint16 tmp = 0;
   switch (instruction_cycles) {
     case 0:
       instruction_cycles++;
       next();
       break;
     case 1:
-      uint16 tmp = ioData;
+      tmp = ioData;
       or_r8(tmp, RegisterBits::Low); // next is called in or_r8
       instruction_cycles = 0;
       break;
@@ -768,13 +785,14 @@ CPU::xor_r8(uint16& regS, CPU::RegisterBits regSB)
 void
 CPU::xor_ar16(uint16& regS)
 {
+  uint16 tmp = 0;
   switch (instruction_cycles) {
     case 0:
       read(regS);
       instruction_cycles++;
       break;
     case 1:
-      uint16 tmp = ioData;
+      tmp = ioData;
       xor_r8(tmp, RegisterBits::Low); // next is called in xor_r8
       instruction_cycles = 0;
       break;
@@ -784,13 +802,14 @@ CPU::xor_ar16(uint16& regS)
 void
 CPU::xor_n8()
 {
+  uint16 tmp = 0;
   switch (instruction_cycles) {
     case 0:
       instruction_cycles++;
       next();
       break;
     case 1:
-      uint16 tmp = ioData;
+      tmp = ioData;
       xor_r8(tmp, RegisterBits::Low); // next is called in xor_r8
       instruction_cycles = 0;
       break;
@@ -811,13 +830,14 @@ CPU::bit_r8(uint16& regS, CPU::RegisterBits regSB, uint8 bit)
 void
 CPU::bit_ar16(uint16& regS, uint8 bit)
 {
+  uint16 tmp = 0;
   switch (instruction_cycles) {
     case 0:
       read(regS);
       instruction_cycles++;
       break;
     case 1:
-      uint16 tmp = ioData;
+      tmp = ioData;
       bit_r8(tmp, RegisterBits::Low, bit); // next is called in bit_r8
       instruction_cycles = 0;
       break;
@@ -836,13 +856,14 @@ CPU::res_r8(uint16& regS, CPU::RegisterBits regSB, uint8 bit)
 void
 CPU::res_ar16(uint16& regS, uint8 bit)
 {
+  uint8 tmp = 0;
   switch (instruction_cycles) {
     case 0:
       read(regS);
       instruction_cycles++;
       break;
     case 1:
-      uint8 tmp = ioData & ~(1 << bit);
+      tmp = ioData & ~(1 << bit);
       write(regS, tmp);
       instruction_cycles++;
       break;
@@ -865,13 +886,14 @@ CPU::set_r8(uint16& regS, CPU::RegisterBits regSB, uint8 bit)
 void
 CPU::set_ar16(uint16& regS, uint8 bit)
 {
+  uint8 tmp = 0;
   switch (instruction_cycles) {
     case 0:
       read(regS);
       instruction_cycles++;
       break;
     case 1:
-      uint8 tmp = ioData | (1 << bit);
+      tmp = ioData | (1 << bit);
       write(regS, tmp);
       instruction_cycles++;
       break;
@@ -901,15 +923,18 @@ CPU::rl_r8(uint16& regS, CPU::RegisterBits regSB)
 void
 CPU::rl_ar16(uint16& regS)
 {
+  uint8 tmp = 0;
+  bool carry = false;
+  bool newCarry = false;
   switch (instruction_cycles) {
     case 0:
       read(regS);
       instruction_cycles++;
       break;
     case 1:
-      uint8 tmp = ioData;
-      bool carry = getFlag(FlagBits::Carry);
-      bool newCarry = (tmp & 0x80) != 0;
+      tmp = ioData;
+      carry = getFlag(FlagBits::Carry);
+      newCarry = (tmp & 0x80) != 0;
       tmp = (tmp << 1) | (carry ? 1 : 0);
       write(regS, tmp);
       setFlag(FlagBits::Zero, tmp == 0);
@@ -957,14 +982,16 @@ CPU::rlc_r8(uint16& regS, CPU::RegisterBits regSB)
 void
 CPU::rlc_ar16(uint16& regS)
 {
+  uint8 tmp = 0;
+  bool newCarry = false;
   switch (instruction_cycles) {
     case 0:
       read(regS);
       instruction_cycles++;
       break;
     case 1:
-      uint8 tmp = ioData;
-      bool newCarry = (tmp & 0x80) != 0;
+      tmp = ioData;
+      newCarry = (tmp & 0x80) != 0;
       tmp = (tmp << 1) | (newCarry ? 1 : 0);
       write(regS, tmp);
       setFlag(FlagBits::Zero, tmp == 0);
@@ -1012,15 +1039,18 @@ CPU::rr_r8(uint16& regS, CPU::RegisterBits regSB)
 void
 CPU::rr_ar16(uint16& regS)
 {
+  uint8 tmp = 0;
+  bool carry = false;
+  bool newCarry = false;
   switch (instruction_cycles) {
     case 0:
       read(regS);
       instruction_cycles++;
       break;
     case 1:
-      uint8 tmp = ioData;
-      bool carry = getFlag(FlagBits::Carry);
-      bool newCarry = (tmp & 0x01) != 0;
+      tmp = ioData;
+      carry = getFlag(FlagBits::Carry);
+      newCarry = (tmp & 0x01) != 0;
       tmp = (tmp >> 1) | (carry ? 0x80 : 0);
       write(regS, tmp);
       setFlag(FlagBits::Zero, tmp == 0);
@@ -1068,14 +1098,16 @@ CPU::rrc_r8(uint16& regS, CPU::RegisterBits regSB)
 void
 CPU::rrc_ar16(uint16& regS)
 {
+  uint8 tmp = 0;
+  bool newCarry = false;
   switch (instruction_cycles) {
     case 0:
       read(regS);
       instruction_cycles++;
       break;
     case 1:
-      uint8 tmp = ioData;
-      bool newCarry = (tmp & 0x01) != 0;
+      tmp = ioData;
+      newCarry = (tmp & 0x01) != 0;
       tmp = (tmp >> 1) | (newCarry ? 0x80 : 0);
       write(regS, tmp);
       setFlag(FlagBits::Zero, tmp == 0);
@@ -1122,14 +1154,16 @@ CPU::sla_r8(uint16& regS, CPU::RegisterBits regSB)
 void
 CPU::sla_ar16(uint16& regS)
 {
+  uint8 tmp = 0;
+  bool newCarry = false;
   switch (instruction_cycles) {
     case 0:
       read(regS);
       instruction_cycles++;
       break;
     case 1:
-      uint8 tmp = ioData;
-      bool newCarry = (tmp & 0x80) != 0;
+      tmp = ioData;
+      newCarry = (tmp & 0x80) != 0;
       tmp = tmp << 1;
       write(regS, tmp);
       setFlag(FlagBits::Zero, tmp == 0);
@@ -1162,14 +1196,16 @@ CPU::sra_r8(uint16& regS, CPU::RegisterBits regSB)
 void
 CPU::sra_ar16(uint16& regS)
 {
+  uint8 tmp = 0;
+  bool newCarry = false;
   switch (instruction_cycles) {
     case 0:
       read(regS);
       instruction_cycles++;
       break;
     case 1:
-      uint8 tmp = ioData;
-      bool newCarry = (tmp & 0x01) != 0;
+      tmp = ioData;
+      newCarry = (tmp & 0x01) != 0;
       tmp = (tmp >> 1) | (tmp & 0x80);
       write(regS, tmp);
       setFlag(FlagBits::Zero, tmp == 0);
@@ -1202,14 +1238,16 @@ CPU::srl_r8(uint16& regS, CPU::RegisterBits regSB)
 void
 CPU::srl_ar16(uint16& regS)
 {
+  uint8 tmp = 0;
+  bool newCarry = false;
   switch (instruction_cycles) {
     case 0:
       read(regS);
       instruction_cycles++;
       break;
     case 1:
-      uint8 tmp = ioData;
-      bool newCarry = (tmp & 0x01) != 0;
+      tmp = ioData;
+      newCarry = (tmp & 0x01) != 0;
       tmp = tmp >> 1;
       write(regS, tmp);
       setFlag(FlagBits::Zero, tmp == 0);
@@ -1241,13 +1279,14 @@ CPU::swap_r8(uint16& regS, CPU::RegisterBits regSB)
 void
 CPU::swap_ar16(uint16& regS)
 {
+  uint8 tmp = 0;
   switch (instruction_cycles) {
     case 0:
       read(regS);
       instruction_cycles++;
       break;
     case 1:
-      uint8 tmp = ioData;
+      tmp = ioData;
       tmp = (tmp << 4) | (tmp >> 4);
       write(regS, tmp);
       setFlag(FlagBits::Zero, tmp == 0);
@@ -1402,13 +1441,14 @@ CPU::jp_cc_a16(Condition flag)
 void
 CPU::jr_a8()
 {
+  int16 new_addr = 0;
   switch (instruction_cycles) {
     case 0:
       instruction_cycles++;
       next();
       break;
     case 1:
-      int16 new_addr = (int16)PC + (int8)ioData;
+      new_addr = (int16)PC + (int8)ioData;
       setRegister(PC, new_addr, RegisterBits::Full);
       instruction_cycles++;
       break;
@@ -1580,14 +1620,16 @@ CPU::scf()
 void
 CPU::add_sp_e8()
 {
+  int8 val = 0;
+  uint16 result = 0;
   switch (instruction_cycles) {
     case 0:
       instruction_cycles++;
       next();
       break;
     case 1:
-      int8 val = (int8)ioData;
-      uint16 result = (int16)SP + (int16)val;
+      val = (int8)ioData;
+      result = (int16)SP + (int16)val;
       setFlag(FlagBits::Zero, false);
       setFlag(FlagBits::Subtract, false);
       setFlag(FlagBits::HalfCarry, ((SP & 0x0F) + ((uint16)val & 0x0F)) > 0x0F);
@@ -1636,14 +1678,16 @@ CPU::ld_a16_sp()
 void
 CPU::ld_hl_sp_e8()
 {
+  int8 val = 0;
+  uint16 result = 0;
   switch (instruction_cycles) {
     case 0:
       instruction_cycles++;
       next();
       break;
     case 1:
-      int8 val = (int8)ioData;
-      uint16 result = (int16)SP + (int16)val;
+      val = (int8)ioData;
+      result = (int16)SP + (int16)val;
       setRegister(HL, result, RegisterBits::Full);
       setFlag(FlagBits::Zero, false);
       setFlag(FlagBits::Subtract, false);
@@ -1661,9 +1705,10 @@ CPU::ld_hl_sp_e8()
 void
 CPU::ld_r16_r16(uint16& regD, uint16& regS)
 {
+  uint16 val = 0;
   switch (instruction_cycles) {
     case 0:
-      uint16 val = readRegister(regS, RegisterBits::Full);
+      val = readRegister(regS, RegisterBits::Full);
       setRegister(regD, val, RegisterBits::Full);
       instruction_cycles++;
       break;

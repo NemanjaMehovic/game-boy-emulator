@@ -93,9 +93,9 @@ MBC_Handler::load()
 void
 MBC_Handler::write(uint16 address, uint8 val)
 {
-  if (address < 0x8000)
+  if (address <= RomEnd)
     write_rom(address, val);
-  else if (address >= 0xA000 && address <= 0xBFFF)
+  else if (address >= ExternalRamStart && address <= ExternalRamEnd)
     write_ram(address, val);
   else
     log_error("Called MBC write for address 0x%X", address);
@@ -104,9 +104,9 @@ MBC_Handler::write(uint16 address, uint8 val)
 uint8
 MBC_Handler::read(uint16 address)
 {
-  if (address < 0x8000)
+  if (address <= RomEnd)
     return read_rom(address);
-  else if (address >= 0xA000 && address <= 0xBFFF)
+  else if (address >= ExternalRamStart && address <= ExternalRamEnd)
     return read_ram(address);
 
   log_error("Called MBC read for address 0x%X", address);

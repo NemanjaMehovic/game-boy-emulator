@@ -5,12 +5,16 @@
 
 #include "common.h"
 
+class MMU;
 
 class CPU
 {
+    friend class MMU;
+
 public:
     CPU();
     void tick(uint64 Tcycle);
+    void setMMU(MMU* mmu) { this->mmu = mmu; }
 private:
 
     enum class RegisterBits {
@@ -60,6 +64,8 @@ private:
     bool use_prefix_instruction = false;
     uint8 curr_opcode = 0;
     std::function<void()> current_instruction;
+
+    MMU* mmu = nullptr;
 
     void initialize();
     void cycle();

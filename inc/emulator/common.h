@@ -19,6 +19,35 @@ using int16 = std::int16_t;
 using int32 = std::int32_t;
 using int64 = std::int64_t;
 
+// Wram
+constexpr uint16 WramStart = 0xC000;
+constexpr uint16 WramEnd = 0xDFFF;
+constexpr uint16 WramSize = WramEnd - WramStart + 1;
+// Vram
+constexpr uint16 VramStart = 0x8000;
+constexpr uint16 VramEnd = 0x9FFF;
+constexpr uint16 VramSize = VramEnd - VramStart + 1;
+// Hram
+constexpr uint16 HramStart = 0xFF80;
+constexpr uint16 HramEnd = 0xFFFE;
+constexpr uint16 HramSize = HramEnd - HramStart + 1;
+// Oam
+constexpr uint16 OamStart = 0xFE00;
+constexpr uint16 OamEnd = 0xFE9F;
+constexpr uint16 OamSize = OamEnd - OamStart + 1;
+// Echo Ram
+constexpr uint16 EchoRamStart = 0xE000;
+constexpr uint16 EchoRamEnd = 0xFDFF;
+// Unusable Memory Area
+constexpr uint16 UnusableStart = 0xFEA0;
+constexpr uint16 UnusableEnd = 0xFEFF;
+// Rom and External Ram
+constexpr uint16 RomStart = 0x0000;
+constexpr uint16 RomEnd = 0x7FFF;
+constexpr uint16 ExternalRamStart = 0xA000;
+constexpr uint16 ExternalRamEnd = 0xBFFF;
+
+
 constexpr uint8 NoMBC = 0x00;
 
 constexpr uint8 MBC1 = 0x01;
@@ -302,6 +331,13 @@ constexpr uint8 NINTENDO_LOGO[] = {
   0x00, 0x0C, 0x00, 0x0D, 0x00, 0x08, 0x11, 0x1F, 0x88, 0x89, 0x00, 0x0E,
   0xDC, 0xCC, 0x6E, 0xE6, 0xDD, 0xDD, 0xD9, 0x99, 0xBB, 0xBB, 0x67, 0x63,
   0x6E, 0x0E, 0xEC, 0xCC, 0xDD, 0xDC, 0x99, 0x9F, 0xBB, 0xB9, 0x33, 0x3E
+};
+
+enum class Component
+{
+  CPU,
+  PPU,
+  DMA
 };
 
 template<typename T>
