@@ -1,7 +1,7 @@
 #include "mmu.h"
 #include "common.h"
 
-MMU::MMU(CPU* cpu, Cartridge* cartridge, PPU* ppu) : cpu(cpu), cartridge(cartridge), ppu(ppu) {
+MMU::MMU(CPU* cpu, Cartridge* cartridge, PPU* ppu, Timer* timer) : cpu(cpu), cartridge(cartridge), ppu(ppu), timer(timer) {
 
 }
 
@@ -100,6 +100,7 @@ uint8 MMU::read_oam(uint16 addr, Component component) {
             return 0xFF;
         }
     }
+    // TODO handle ppu and cpu access conflict
     return oam[addr - OamStart];
 }
 
@@ -110,6 +111,7 @@ void MMU::write_oam(uint16 addr, uint8 val, Component component) {
             return;
         }
     }
+    // TODO handle ppu and cpu access conflict
     oam[addr - OamStart] = val;
 }
 
@@ -119,6 +121,21 @@ uint8 MMU::read_hram(uint16 addr) {
 
 void MMU::write_hram(uint16 addr, uint8 val) {
     hram[addr - HramStart] = val;
+}
+
+uint8 MMU::read_io(uint16 addr, Component component) {
+    if (addr >= TimerStart && addr <= TimerEnd) {
+        return timer->read(addr);
+    }
+    // TODO other IO
+}
+
+void MMU::write_io(uint16 addr, uint8 val, Component component) {
+    if (addr >= TimerStart && addr <= TimerEnd) {
+        timer->write(addr, val);
+        return;
+    }
+    // TODO other IO
 }
 
 uint8 MMU::read(uint16 addr, Component component) {
@@ -137,9 +154,8 @@ uint8 MMU::read(uint16 addr, Component component) {
     } else if (addr >= UnusableStart && addr <= UnusableEnd) {
         log_error("Attempted to read from unusable memory area at address 0x%X", addr);
         return 0xFF;
-    } else if (addr >= 0xFF00 && addr <= 0xFF7F) {
-        // TODO
-        return 0; 
+    } else if (addr >= IoRegistersStart && addr <= IoRegistersEnd) {
+        return read_io(addr, component); 
     } else if (addr >= HramStart && addr <= HramEnd) {
         return read_hram(addr);
     } else if (addr == 0xFFFF) {
@@ -164,8 +180,8 @@ void MMU::write(uint16 addr, uint8 val, Component component) {
         write_oam(addr, val, component);
     } else if (addr >= UnusableStart && addr <= UnusableEnd) {
         log_error("Attempted to write to unusable memory area at address 0x%X", addr);
-    } else if (addr >= 0xFF00 && addr <= 0xFF7F) {
-        // TODO
+    } else if (addr >= IoRegistersStart && addr <= IoRegistersEnd) {
+        write_io(addr, val, component);
     } else if (addr >= HramStart && addr <= HramEnd) {
         write_hram(addr, val);
     } else if (addr == 0xFFFF) {
@@ -173,4 +189,9 @@ void MMU::write(uint16 addr, uint8 val, Component component) {
     } else {
         log_error("Attempted to write to invalid memory address 0x%X", addr);
     }
+}
+
+void MMU::requestInterrupt(Interrupt interrupt) {
+    cpu->IFR |= static_cast<uint8>(interrupt);
+    // TODO check if other handling is needed
 }

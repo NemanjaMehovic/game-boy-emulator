@@ -8,6 +8,7 @@
 #include "cpu.h"
 #include "mmu.h"
 #include "ppu.h"
+#include "timer.h"
 
 class Emulator
 {
@@ -20,6 +21,7 @@ private:
   std::unique_ptr<Cartridge> m_cartridge;
   std::unique_ptr<CPU> m_cpu;
   std::unique_ptr<PPU> m_ppu;
+  std::unique_ptr<Timer> m_timer;
   std::unique_ptr<MMU> m_mmu;
 };
 

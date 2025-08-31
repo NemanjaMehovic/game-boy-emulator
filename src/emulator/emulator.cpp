@@ -10,8 +10,10 @@ Emulator::Emulator(std::string file)
   }
   m_cpu = std::make_unique<CPU>();
   m_ppu = std::make_unique<PPU>();
-  m_mmu = std::make_unique<MMU>(m_cpu.get(), m_cartridge.get(), m_ppu.get());
+  m_timer = std::make_unique<Timer>();
+  m_mmu = std::make_unique<MMU>(m_cpu.get(), m_cartridge.get(), m_ppu.get(), m_timer.get());
   m_cpu->setMMU(m_mmu.get());
+  m_timer->setMMU(m_mmu.get());
 }
 
 bool

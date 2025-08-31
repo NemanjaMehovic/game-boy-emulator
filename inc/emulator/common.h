@@ -46,6 +46,20 @@ constexpr uint16 RomStart = 0x0000;
 constexpr uint16 RomEnd = 0x7FFF;
 constexpr uint16 ExternalRamStart = 0xA000;
 constexpr uint16 ExternalRamEnd = 0xBFFF;
+// IO Registers
+constexpr uint16 IoRegistersStart = 0xFF00;
+constexpr uint16 IoRegistersEnd = 0xFF7F;
+// Timer Registers
+constexpr uint16 TimerStart = 0xFF04;
+constexpr uint16 TimerEnd = 0xFF07;
+
+enum class Interrupt {
+    VBlank = 0x01,
+    LCDStat = 0x02,
+    Timer = 0x04,
+    Serial = 0x08,
+    Joypad = 0x10
+};
 
 
 constexpr uint8 NoMBC = 0x00;
