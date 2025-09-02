@@ -12,6 +12,7 @@ public:
     MMU(CPU* cpu, Cartridge* cartridge, PPU* ppu, Timer* timer);
     uint8 read(uint16 addr, Component component);
     void write(uint16 addr, uint8 val, Component component);
+    void setDmaActive(bool active) { dma_active = active; }
     void requestInterrupt(Interrupt interrupt);
 private:
     uint8 read_rom(uint16 addr, Component component);

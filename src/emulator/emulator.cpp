@@ -13,6 +13,7 @@ Emulator::Emulator(std::string file)
   m_timer = std::make_unique<Timer>();
   m_mmu = std::make_unique<MMU>(m_cpu.get(), m_cartridge.get(), m_ppu.get(), m_timer.get());
   m_cpu->setMMU(m_mmu.get());
+  m_ppu->setMMU(m_mmu.get());
   m_timer->setMMU(m_mmu.get());
 }
 

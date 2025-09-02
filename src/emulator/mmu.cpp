@@ -94,24 +94,30 @@ void MMU::write_vram(uint16 addr, uint8 val, Component component) {
 }
 
 uint8 MMU::read_oam(uint16 addr, Component component) {
-    if (dma_active) {
-        if (component == Component::CPU) {
+    if (component == Component::CPU) {
+        if (dma_active) {
             log_error("Attempted to read from OAM during DMA transfer");
             return 0xFF;
         }
+        if (ppu->getMode() == PpuMode::OamSearch || ppu->getMode() == PpuMode::PixelTransfer) {
+            log_error("Attempted to read from OAM during PPU Mode 3 or 2");
+            return;
+        }
     }
-    // TODO handle ppu and cpu access conflict
     return oam[addr - OamStart];
 }
 
 void MMU::write_oam(uint16 addr, uint8 val, Component component) {
-    if (dma_active) {
-        if (component == Component::CPU) {
+    if (component == Component::CPU) {
+        if (dma_active) {
             log_error("Attempted to write to OAM during DMA transfer");
             return;
         }
+        if (ppu->getMode() == PpuMode::OamSearch || ppu->getMode() == PpuMode::PixelTransfer) {
+            log_error("Attempted to write to OAM during PPU Mode 3 or 2");
+            return;
+        }
     }
-    // TODO handle ppu and cpu access conflict
     oam[addr - OamStart] = val;
 }
 
@@ -126,6 +132,8 @@ void MMU::write_hram(uint16 addr, uint8 val) {
 uint8 MMU::read_io(uint16 addr, Component component) {
     if (addr >= TimerStart && addr <= TimerEnd) {
         return timer->read(addr);
+    } else if (addr >= PpuStart && addr <= PpuEnd) {
+        return ppu->read(addr);
     }
     // TODO other IO
 }
@@ -133,6 +141,9 @@ uint8 MMU::read_io(uint16 addr, Component component) {
 void MMU::write_io(uint16 addr, uint8 val, Component component) {
     if (addr >= TimerStart && addr <= TimerEnd) {
         timer->write(addr, val);
+        return;
+    } else if (addr >= PpuStart && addr <= PpuEnd) {
+        ppu->write(addr, val);
         return;
     }
     // TODO other IO
