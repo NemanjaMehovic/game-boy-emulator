@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 
+#include "apu.h"
 #include "cartridge.h"
 #include "cpu.h"
 #include "mmu.h"
@@ -21,6 +22,7 @@ private:
   std::unique_ptr<Cartridge> m_cartridge;
   std::unique_ptr<CPU> m_cpu;
   std::unique_ptr<PPU> m_ppu;
+  std::unique_ptr<APU> m_apu;
   std::unique_ptr<Timer> m_timer;
   std::unique_ptr<MMU> m_mmu;
 };

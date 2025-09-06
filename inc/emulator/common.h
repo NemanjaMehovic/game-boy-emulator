@@ -55,6 +55,9 @@ constexpr uint16 TimerEnd = 0xFF07;
 // PPU Registers
 constexpr uint16 PpuStart = 0xFF40;
 constexpr uint16 PpuEnd = 0xFF4B;
+// APU Registers
+constexpr uint16 ApuStart = 0xFF10;
+constexpr uint16 ApuEnd = 0xFF3F;
 
 enum class Interrupt {
     VBlank = 0x01,

@@ -61,7 +61,7 @@ CPU::ld_ar16_r8(uint16& regD, uint16& regS, CPU::RegisterBits regSB)
 {
   switch (instruction_cycles) {
     case 0:
-      write(regD, (uint8) readRegister(regS, regSB));
+      write(regD, (uint8)readRegister(regS, regSB));
       instruction_cycles++;
       break;
     case 1:
@@ -75,7 +75,7 @@ void
 CPU::ld_ar16_n8(uint16& regD)
 {
   switch (instruction_cycles) {
-    case 0 :
+    case 0:
       instruction_cycles++;
       next();
       break;
@@ -120,8 +120,8 @@ CPU::ld_a16_r8(uint16& regS, CPU::RegisterBits regSB)
       next();
       break;
     case 2:
-      write((ioData << 8) | lowByte, (uint8) readRegister(regS, regSB));
-      instruction_cycles ++;
+      write((ioData << 8) | lowByte, (uint8)readRegister(regS, regSB));
+      instruction_cycles++;
       break;
     case 3:
       instruction_cycles = 0;
@@ -139,7 +139,7 @@ CPU::ldh_a8_r8(uint16& regS, CPU::RegisterBits regSB)
       next();
       break;
     case 1:
-      write(0xFF00 + ioData, (uint8) readRegister(regS, regSB));
+      write(0xFF00 + ioData, (uint8)readRegister(regS, regSB));
       instruction_cycles++;
       break;
     case 2:
@@ -157,7 +157,8 @@ CPU::ldh_ar8_r8(uint16& regD,
 {
   switch (instruction_cycles) {
     case 0:
-      write(0xFF00 + readRegister(regD, regDB), (uint8) readRegister(regS, regSB));
+      write(0xFF00 + readRegister(regD, regDB),
+            (uint8)readRegister(regS, regSB));
       instruction_cycles++;
       break;
     case 1:
@@ -236,7 +237,7 @@ CPU::ld_ar16i_r8(uint16& regD, uint16& regS, CPU::RegisterBits regSB)
 {
   switch (instruction_cycles) {
     case 0:
-      write(regD, (uint8) readRegister(regS, regSB));
+      write(regD, (uint8)readRegister(regS, regSB));
       iduInc(regD);
       instruction_cycles++;
       break;
@@ -252,7 +253,7 @@ CPU::ld_ar16d_r8(uint16& regD, uint16& regS, CPU::RegisterBits regSB)
 {
   switch (instruction_cycles) {
     case 0:
-      write(regD, (uint8) readRegister(regS, regSB));
+      write(regD, (uint8)readRegister(regS, regSB));
       iduDec(regD);
       instruction_cycles++;
       break;
@@ -619,7 +620,8 @@ CPU::add_r16_r16(uint16& regD, uint16& regS)
       result = val1 + val2;
       setRegister(regD, result, RegisterBits::Full);
       setFlag(FlagBits::Zero, result == 0);
-      setFlag(FlagBits::HalfCarry, ((val1 & 0x0FFF) + (val2 & 0x0FFF)) > 0x0FFF);
+      setFlag(FlagBits::HalfCarry,
+              ((val1 & 0x0FFF) + (val2 & 0x0FFF)) > 0x0FFF);
       setFlag(FlagBits::Carry, (val1 + val2) > 0xFFFF);
       instruction_cycles++;
       break;
@@ -1322,13 +1324,18 @@ CPU::call_a16()
       instruction_cycles++;
       break;
     case 3:
-      write(SP, (uint8) readRegister(PC, RegisterBits::High)); // push high byte of PC
+      write(
+        SP,
+        (uint8)readRegister(PC, RegisterBits::High)); // push high byte of PC
       iduDec(SP);
       instruction_cycles++;
       break;
     case 4:
-      write(SP, (uint8) readRegister(PC, RegisterBits::Low)); // push low byte of PC
-      setRegister(PC, (highByte << 8) | lowByte, RegisterBits::Full); // set PC to new address
+      write(SP,
+            (uint8)readRegister(PC, RegisterBits::Low)); // push low byte of PC
+      setRegister(PC,
+                  (highByte << 8) | lowByte,
+                  RegisterBits::Full); // set PC to new address
       instruction_cycles++;
       break;
     case 5:
@@ -1363,12 +1370,17 @@ CPU::call_cc(Condition flag)
       break;
     case 3:
       iduDec(SP);
-      write(SP, (uint8) readRegister(PC, RegisterBits::High)); // push high byte of PC
+      write(
+        SP,
+        (uint8)readRegister(PC, RegisterBits::High)); // push high byte of PC
       instruction_cycles++;
       break;
     case 4:
-      write(SP,(uint8) readRegister(PC, RegisterBits::Low)); // push low byte of PC
-      setRegister(PC, (highByte << 8) | lowByte, RegisterBits::Full); // set PC to new address
+      write(SP,
+            (uint8)readRegister(PC, RegisterBits::Low)); // push low byte of PC
+      setRegister(PC,
+                  (highByte << 8) | lowByte,
+                  RegisterBits::Full); // set PC to new address
       instruction_cycles++;
       break;
     case 5:
@@ -1580,13 +1592,17 @@ CPU::rst()
       instruction_cycles++;
       break;
     case 1:
-      write(SP, (uint8) readRegister(PC, RegisterBits::High)); // push high byte of PC
+      write(
+        SP,
+        (uint8)readRegister(PC, RegisterBits::High)); // push high byte of PC
       iduDec(SP);
       instruction_cycles++;
       break;
     case 2:
-      write(SP, (uint8) readRegister(PC, RegisterBits::Low)); // push low byte of PC
-      setRegister(PC, curr_opcode & 0x38, RegisterBits::Full); // set PC to new address
+      write(SP,
+            (uint8)readRegister(PC, RegisterBits::Low)); // push low byte of PC
+      setRegister(
+        PC, curr_opcode & 0x38, RegisterBits::Full); // set PC to new address
       instruction_cycles++;
       break;
     case 3:
@@ -1661,11 +1677,14 @@ CPU::ld_a16_sp()
       break;
     case 2:
       highByte = ioData;
-      write((highByte << 8) | lowByte, (uint8) readRegister(SP, RegisterBits::Low)); // write low byte of SP
+      write((highByte << 8) | lowByte,
+            (uint8)readRegister(SP, RegisterBits::Low)); // write low byte of SP
       instruction_cycles++;
       break;
     case 3:
-      write(((highByte << 8) | lowByte) + 1, (uint8) readRegister(SP, RegisterBits::High)); // write high byte of SP
+      write(
+        ((highByte << 8) | lowByte) + 1,
+        (uint8)readRegister(SP, RegisterBits::High)); // write high byte of SP
       instruction_cycles++;
       break;
     case 4:
@@ -1751,12 +1770,14 @@ CPU::push_r16(uint16& regS)
       instruction_cycles++;
       break;
     case 1:
-      write(SP, (uint8) (readRegister(regS, RegisterBits::High))); // push high byte
+      write(SP,
+            (uint8)(readRegister(regS, RegisterBits::High))); // push high byte
       iduDec(SP);
       instruction_cycles++;
       break;
     case 2:
-      write(SP, (uint8) (readRegister(regS, RegisterBits::Low))); // push low byte
+      write(SP,
+            (uint8)(readRegister(regS, RegisterBits::Low))); // push low byte
       instruction_cycles++;
       break;
     case 3:
@@ -1790,7 +1811,7 @@ CPU::halt()
   instruction_cycles = 0;
   read(PC);
 
-  if(ime != Ime::Enable && !halted) {
+  if (ime != Ime::Enable && !halted) {
     return;
   }
   iduInc(PC);

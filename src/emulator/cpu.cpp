@@ -293,6 +293,8 @@ CPU::readRegister(uint16& reg, RegisterBits register_bits)
     case RegisterBits::Full:
       return reg;
   }
+  log_error("CPU reading unknown bits from register.");
+  return reg;
 }
 
 void
@@ -324,6 +326,8 @@ CPU::checkCondition(Condition flag)
     case Condition::NotCarry:
       return !getFlag(FlagBits::Carry);
   }
+  log_error("CPU checking unknown condition.");
+  return false;
 }
 
 uint8

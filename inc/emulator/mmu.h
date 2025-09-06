@@ -1,6 +1,7 @@
 #ifndef MMU_H
 #define MMU_H
 
+#include "apu.h"
 #include "common.h"
 #include "cpu.h"
 #include "cartridge.h"
@@ -9,7 +10,7 @@
 
 class MMU {
 public:
-    MMU(CPU* cpu, Cartridge* cartridge, PPU* ppu, Timer* timer);
+    MMU(CPU* cpu, Cartridge* cartridge, PPU* ppu, Timer* timer, APU* apu);
     uint8 read(uint16 addr, Component component);
     void write(uint16 addr, uint8 val, Component component);
     void setDmaActive(bool active) { dma_active = active; }
@@ -34,6 +35,7 @@ private:
     Cartridge* cartridge;
     PPU* ppu;
     Timer* timer;
+    APU* apu;
     uint8 wram[WramSize] = {0};
     uint8 vram[VramSize] = {0};
     uint8 oam[OamSize] = {0};
