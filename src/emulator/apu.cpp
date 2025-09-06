@@ -444,7 +444,7 @@ APU::writeNR51(uint8 val)
 void
 APU::writeNR52(uint8 val)
 {
-  nr52 = val | 0x70;
+  nr52 = val | 0x7F;
 }
 
 void
