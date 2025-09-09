@@ -35,3 +35,11 @@ MainWindow::on_pushButton_clicked()
     m_emulator.reset();
   }
 }
+
+void
+MainWindow::on_pushButton_2_clicked()
+{
+  if (m_emulator) {
+    m_emulator->cycleFrame();
+  }
+}

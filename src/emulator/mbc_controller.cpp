@@ -150,6 +150,7 @@ MBC1_Handler::MBC1_Handler(uint8* data, header* header)
   : MBC_Handler(data, header)
 {
   m_is_mbc1m = checkIsMBC1M();
+  m_low_banking_bits = 1;
   if (m_is_mbc1m) {
     log_info("MBC1M detected");
   }
@@ -263,6 +264,7 @@ MBC2_Handler::MBC2_Handler(uint8* data, header* header)
   // MBC2 always has a fixed ram size of 512 half bytes
   m_ram_size = 512;
   m_ram = std::make_unique<uint8[]>(m_ram_size);
+  m_banking_bits = 1;
   if (m_has_battery && m_ram) {
     load();
   }

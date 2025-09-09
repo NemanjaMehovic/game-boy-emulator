@@ -169,6 +169,17 @@ MMU::read_io(uint16 addr, Component component)
     return ppu->read(addr);
   } else if (addr >= ApuStart && addr <= ApuEnd) {
     return apu->read(addr);
+  } else if (addr >= SerialStart && addr <= SerialEnd) {
+    if (addr == 0xFF02) {
+      return sc;
+    } else {
+      return sb;
+    }
+  } else if (addr == IFRAddr) {
+    return cpu->IFR;
+  } else if (addr == BootRomAddr) {
+    log_error("Reading boor rom?");
+    return 1;
   }
   log_error("Attempted to read from invalid IO address 0x%X", addr);
   return 0xFF;
@@ -186,6 +197,18 @@ MMU::write_io(uint16 addr, uint8 val, Component component)
     return;
   } else if (addr >= ApuStart && addr <= ApuEnd) {
     apu->write(addr, val);
+    return;
+  } else if (addr >= SerialStart && addr <= SerialEnd) {
+    if (addr == 0xFF02) {
+      sc = val | 0x7E;
+      log_info("SC = %X", sc);
+    } else {
+      sb = val;
+      log_info("SB = %X", sb);
+    }
+    return;
+  } else if (addr == IFRAddr) {
+    cpu->IFR = val;
     return;
   }
   log_error("Attempted to write to invalid IO address 0x%X", addr);
@@ -215,7 +238,7 @@ MMU::read(uint16 addr, Component component)
     return read_io(addr, component);
   } else if (addr >= HramStart && addr <= HramEnd) {
     return read_hram(addr);
-  } else if (addr == 0xFFFF) {
+  } else if (addr == IEAddr) {
     return cpu->IER;
   }
   log_error("Attempted to read from invalid memory address 0x%X", addr);
@@ -244,7 +267,7 @@ MMU::write(uint16 addr, uint8 val, Component component)
     write_io(addr, val, component);
   } else if (addr >= HramStart && addr <= HramEnd) {
     write_hram(addr, val);
-  } else if (addr == 0xFFFF) {
+  } else if (addr == IEAddr) {
     cpu->IER = val;
   } else {
     log_error("Attempted to write to invalid memory address 0x%X", addr);

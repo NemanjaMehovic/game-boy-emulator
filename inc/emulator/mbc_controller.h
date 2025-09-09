@@ -61,7 +61,7 @@ private:
   bool checkIsMBC1M();
 
   uint8 m_mode = 0;
-  uint8 m_low_banking_bits = 0;
+  uint8 m_low_banking_bits = 1;
   uint8 m_high_banking_bits = 0;
   bool m_is_mbc1m = false;
 };
@@ -78,7 +78,7 @@ protected:
   virtual uint8 read_ram(uint16 address) override;
 
 private:
-  uint8 m_banking_bits = 0;
+  uint8 m_banking_bits = 1;
 };
 
 #endif // MBC_CONTROLLER_H

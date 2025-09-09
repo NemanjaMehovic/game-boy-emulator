@@ -26,10 +26,11 @@ Cartridge::Cartridge(std::string location)
   m_cartridge_size = size;
 
   m_valid = checkData();
-  if (!m_valid) {
-    log_error("Loaded cartridge isn't valid");
-    return;
-  }
+  m_valid = true;
+  // if (!m_valid) {
+  //   log_error("Loaded cartridge isn't valid");
+  //   return;
+  // }
 
   m_mbc_handler = MBC_Handler::CreateHandler(this);
 

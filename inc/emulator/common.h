@@ -2,6 +2,7 @@
 #define COMMON_H
 
 #include <cstdint>
+#include <fstream>
 #include <memory>
 #include <mutex>
 #include <stdexcept>
@@ -58,15 +59,23 @@ constexpr uint16 PpuEnd = 0xFF4B;
 // APU Registers
 constexpr uint16 ApuStart = 0xFF10;
 constexpr uint16 ApuEnd = 0xFF3F;
+// Serial Registers
+constexpr uint16 SerialStart = 0xFF01;
+constexpr uint16 SerialEnd = 0xFF02;
+// Interrup Registers
+constexpr uint16 IFRAddr = 0xFF0F;
+constexpr uint16 IEAddr = 0xFFFF;
+// BootRom Register
+constexpr uint16 BootRomAddr = 0xFF50;
 
-enum class Interrupt {
-    VBlank = 0x01,
-    LCDStat = 0x02,
-    Timer = 0x04,
-    Serial = 0x08,
-    Joypad = 0x10
+enum class Interrupt
+{
+  VBlank = 0x01,
+  LCDStat = 0x02,
+  Timer = 0x04,
+  Serial = 0x08,
+  Joypad = 0x10
 };
-
 
 constexpr uint8 NoMBC = 0x00;
 
@@ -368,6 +377,7 @@ mask_n_bits(uint8 n, T value)
   return value & mask;
 }
 
+#define DEBUG_ENABLED false
 class Logger
 {
 public:
@@ -379,8 +389,21 @@ public:
   void log(std::string msg);
 
 private:
-  Logger() {}
+  Logger()
+  {
+    if (DEBUG_ENABLED) {
+      myfile.open("/home/nemanja/Desktop/debug_output.log", std::ios_base::app);
+    }
+  }
+  ~Logger()
+  {
+    if (DEBUG_ENABLED) {
+      myfile.flush();
+      myfile.close();
+    }
+  }
   std::mutex logger_lock;
+  std::ofstream myfile;
 };
 
 char*
@@ -414,5 +437,10 @@ getTimeString();
                __PRETTY_FUNCTION__,                                            \
                __LINE__,                                                       \
                ##args)
+
+#define log_debug(message, args...)                                            \
+  if (DEBUG_ENABLED) {                                                         \
+    internal_log("%-5s | " message, "DEBUG", ##args)                           \
+  }
 
 #endif // COMMON_H

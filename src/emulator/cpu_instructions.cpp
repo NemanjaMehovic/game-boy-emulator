@@ -16,6 +16,7 @@ CPU::ld_r8_r8(uint16& regD,
 {
   uint16 sourceValue = readRegister(regS, regSB);
   setRegister(regD, sourceValue, regDB);
+  log_debug("ld_r8_r8");
   next();
 }
 
@@ -29,6 +30,7 @@ CPU::ld_r8_n8(uint16& regD, CPU::RegisterBits regB)
       break;
     case 1:
       setRegister(regD, ioData, regB);
+      log_debug("ld_r8_n8 0x%X", ioData);
       next();
       instruction_cycles = 0;
       break;
@@ -50,6 +52,7 @@ CPU::ld_r16_n16(uint16& regD)
       break;
     case 2:
       setRegister(regD, (ioData << 8) | lowByte, RegisterBits::Full);
+      log_debug("ld_r16_n16 0x%X", (ioData << 8) | lowByte);
       next();
       instruction_cycles = 0;
       break;
@@ -67,6 +70,7 @@ CPU::ld_ar16_r8(uint16& regD, uint16& regS, CPU::RegisterBits regSB)
     case 1:
       next();
       instruction_cycles = 0;
+      log_debug("ld_ar16_r8");
       break;
   }
 }
@@ -80,6 +84,7 @@ CPU::ld_ar16_n8(uint16& regD)
       next();
       break;
     case 1:
+      log_debug("ld_ar16_n8 0x%X", ioData);
       write(regD, ioData);
       instruction_cycles++;
       break;
@@ -102,6 +107,7 @@ CPU::ld_r8_ar16(uint16& regD, CPU::RegisterBits regDB, uint16& regS)
       setRegister(regD, ioData, regDB);
       instruction_cycles = 0;
       next();
+      log_debug("ld_r8_ar16");
       break;
   }
 }
@@ -121,6 +127,7 @@ CPU::ld_a16_r8(uint16& regS, CPU::RegisterBits regSB)
       break;
     case 2:
       write((ioData << 8) | lowByte, (uint8)readRegister(regS, regSB));
+      log_debug("ld_a16_r8 0x%X", (ioData << 8) | lowByte);
       instruction_cycles++;
       break;
     case 3:
@@ -140,6 +147,7 @@ CPU::ldh_a8_r8(uint16& regS, CPU::RegisterBits regSB)
       break;
     case 1:
       write(0xFF00 + ioData, (uint8)readRegister(regS, regSB));
+      log_debug("ldh_a8_r8 0x%X", ioData);
       instruction_cycles++;
       break;
     case 2:
@@ -164,6 +172,7 @@ CPU::ldh_ar8_r8(uint16& regD,
     case 1:
       instruction_cycles = 0;
       next();
+      log_debug("ldh_ar8_r8");
       break;
   }
 }
@@ -182,6 +191,7 @@ CPU::ld_r8_a16(uint16& regD, CPU::RegisterBits regDB)
       next();
       break;
     case 2:
+      log_debug("ld_r8_a16 0x%X", (ioData << 8) | lowByte);
       read((ioData << 8) | lowByte);
       instruction_cycles++;
       break;
@@ -202,6 +212,7 @@ CPU::ldh_r8_a8(uint16& regD, CPU::RegisterBits regDB)
       next();
       break;
     case 1:
+      log_debug("ldh_r8_a8 0x%X", ioData);
       read(0xFF00 + ioData);
       instruction_cycles++;
       break;
@@ -228,6 +239,7 @@ CPU::ldh_r8_ar8(uint16& regD,
       setRegister(regD, ioData, regDB);
       instruction_cycles = 0;
       next();
+      log_debug("ldh_r8_ar8");
       break;
   }
 }
@@ -244,6 +256,7 @@ CPU::ld_ar16i_r8(uint16& regD, uint16& regS, CPU::RegisterBits regSB)
     case 1:
       instruction_cycles = 0;
       next();
+      log_debug("ld_ar16i_r8");
       break;
   }
 }
@@ -260,6 +273,7 @@ CPU::ld_ar16d_r8(uint16& regD, uint16& regS, CPU::RegisterBits regSB)
     case 1:
       instruction_cycles = 0;
       next();
+      log_debug("ld_ar16d_r8");
       break;
   }
 }
@@ -274,9 +288,12 @@ CPU::ld_r8_ar16i(uint16& regD, CPU::RegisterBits regDB, uint16& regS)
       instruction_cycles++;
       break;
     case 1:
+      log_debug("Before set regD = 0x%02X ioData = 0x%02X", readRegister(regD, regDB), ioData);
       setRegister(regD, ioData, regDB);
+      log_debug("After set regD = 0x%02X ioData = 0x%02X", readRegister(regD, regDB), ioData);
       instruction_cycles = 0;
       next();
+      log_debug("ld_r8_ar16i");
       break;
   }
 }
@@ -294,6 +311,7 @@ CPU::ld_r8_ar16d(uint16& regD, CPU::RegisterBits regDB, uint16& regS)
       setRegister(regD, ioData, regDB);
       instruction_cycles = 0;
       next();
+      log_debug("ld_r8_ar16d");
       break;
   }
 }
@@ -312,6 +330,7 @@ CPU::adc_r8(uint16& regS, CPU::RegisterBits regSB)
   setFlag(FlagBits::HalfCarry, ((val1 & 0x0F) + (val2 & 0x0F) + carry) > 0x0F);
   setFlag(FlagBits::Carry, (val1 + val2 + carry) > 0xFF);
   next();
+  log_debug("adc_r8");
 }
 
 void
@@ -325,6 +344,7 @@ CPU::adc_ar16(uint16& regS)
       break;
     case 1:
       tmp = ioData;
+      log_debug("adc_ar16 [ignore next log]");
       adc_r8(tmp, RegisterBits::Low); // next is called in adc_r8
       instruction_cycles = 0;
       break;
@@ -342,6 +362,7 @@ CPU::adc_n8()
       break;
     case 1:
       tmp = ioData;
+      log_debug("adc_n8 0x%X [ignore next log]", tmp);
       adc_r8(tmp, RegisterBits::Low); // next is called in adc_r8
       instruction_cycles = 0;
       break;
@@ -360,6 +381,7 @@ CPU::add_r8(uint16& regS, CPU::RegisterBits regSB)
   setFlag(FlagBits::HalfCarry, ((val1 & 0x0F) + (val2 & 0x0F)) > 0x0F);
   setFlag(FlagBits::Carry, (val1 + val2) > 0xFF);
   next();
+  log_debug("add_r8");
 }
 
 void
@@ -373,6 +395,7 @@ CPU::add_ar16(uint16& regS)
       break;
     case 1:
       tmp = ioData;
+      log_debug("add_ar16 [ignore next log]");
       add_r8(tmp, RegisterBits::Low); // next is called in add_r8
       instruction_cycles = 0;
       break;
@@ -390,6 +413,7 @@ CPU::add_n8()
       break;
     case 1:
       tmp = ioData;
+      log_debug("add_n8 0x%X [ignore next log]", tmp);
       add_r8(tmp, RegisterBits::Low); // next is called in add_r8
       instruction_cycles = 0;
       break;
@@ -406,6 +430,7 @@ CPU::cp_r8(uint16& regS, CPU::RegisterBits regSB)
   setFlag(FlagBits::HalfCarry, (val1 & 0x0F) < (val2 & 0x0F));
   setFlag(FlagBits::Carry, val1 < val2);
   next();
+  log_debug("cp_r8");
 }
 
 void
@@ -419,6 +444,7 @@ CPU::cp_ar16(uint16& regS)
       break;
     case 1:
       tmp = ioData;
+      log_debug("cp_ar16 [ignore next log]");
       cp_r8(tmp, RegisterBits::Low); // next is called in cp_r8
       instruction_cycles = 0;
       break;
@@ -436,6 +462,7 @@ CPU::cp_n8()
       break;
     case 1:
       tmp = ioData;
+      log_debug("cp_n8 0x%X [ignore next log]", tmp);
       cp_r8(tmp, RegisterBits::Low); // next is called in cp_r8
       instruction_cycles = 0;
       break;
@@ -452,6 +479,7 @@ CPU::dec_r8(uint16& regS, CPU::RegisterBits regSB)
   setFlag(FlagBits::Subtract, true);
   setFlag(FlagBits::HalfCarry, (val & 0x0F) == 0);
   next();
+  log_debug("dec_r8");
 }
 
 void
@@ -471,6 +499,7 @@ CPU::dec_ar16(uint16& regS)
       break;
     case 2:
       instruction_cycles = 0;
+      log_debug("dec_ar16");
       next();
       break;
   }
@@ -486,6 +515,7 @@ CPU::inc_r8(uint16& regS, CPU::RegisterBits regSB)
   setFlag(FlagBits::Subtract, false);
   setFlag(FlagBits::HalfCarry, (val & 0x0F) == 0x0F);
   next();
+  log_debug("inc_r8");
 }
 
 void
@@ -498,7 +528,7 @@ CPU::inc_ar16(uint16& regS)
       break;
     case 1:
       setFlag(FlagBits::Zero, ioData == 0xFF);
-      setFlag(FlagBits::Subtract, true);
+      setFlag(FlagBits::Subtract, false);
       setFlag(FlagBits::HalfCarry, (ioData & 0x0F) == 0x0F);
       write(regS, ioData + 1);
       instruction_cycles++;
@@ -506,6 +536,7 @@ CPU::inc_ar16(uint16& regS)
     case 2:
       instruction_cycles = 0;
       next();
+      log_debug("inc_ar16");
       break;
   }
 }
@@ -523,6 +554,7 @@ CPU::sbc_r8(uint16& regS, CPU::RegisterBits regSB)
   setFlag(FlagBits::HalfCarry, (val1 & 0x0F) < ((val2 & 0x0F) + carry));
   setFlag(FlagBits::Carry, val1 < (val2 + carry));
   next();
+  log_debug("sbc_r8");
 }
 
 void
@@ -536,6 +568,7 @@ CPU::sbc_ar16(uint16& regS)
       break;
     case 1:
       tmp = ioData;
+      log_debug("sbc_ar16 [ignore next log]");
       sbc_r8(tmp, RegisterBits::Low); // next is called in sbc_r8
       instruction_cycles = 0;
       break;
@@ -553,6 +586,7 @@ CPU::sbc_n8()
       break;
     case 1:
       tmp = ioData;
+      log_debug("sbc_n8 0x%X [ignore next log]", tmp);
       sbc_r8(tmp, RegisterBits::Low); // next is called in sbc_r8
       instruction_cycles = 0;
       break;
@@ -571,6 +605,7 @@ CPU::sub_r8(uint16& regS, CPU::RegisterBits regSB)
   setFlag(FlagBits::HalfCarry, (val1 & 0x0F) < (val2 & 0x0F));
   setFlag(FlagBits::Carry, val1 < val2);
   next();
+  log_debug("sub_r8");
 }
 
 void
@@ -584,6 +619,7 @@ CPU::sub_ar16(uint16& regS)
       break;
     case 1:
       tmp = ioData;
+      log_debug("sub_ar16 [ignore next log]");
       sub_r8(tmp, RegisterBits::Low); // next is called in sub_r8
       instruction_cycles = 0;
       break;
@@ -601,6 +637,7 @@ CPU::sub_n8()
       break;
     case 1:
       tmp = ioData;
+      log_debug("sub_n8 0x%X [ignore next log]", tmp);
       sub_r8(tmp, RegisterBits::Low); // next is called in sub_r8
       instruction_cycles = 0;
       break;
@@ -619,7 +656,7 @@ CPU::add_r16_r16(uint16& regD, uint16& regS)
       val2 = readRegister(regS, RegisterBits::Full);
       result = val1 + val2;
       setRegister(regD, result, RegisterBits::Full);
-      setFlag(FlagBits::Zero, result == 0);
+      setFlag(FlagBits::Subtract, false);
       setFlag(FlagBits::HalfCarry,
               ((val1 & 0x0FFF) + (val2 & 0x0FFF)) > 0x0FFF);
       setFlag(FlagBits::Carry, (val1 + val2) > 0xFFFF);
@@ -628,6 +665,7 @@ CPU::add_r16_r16(uint16& regD, uint16& regS)
     case 1:
       instruction_cycles = 0;
       next();
+      log_debug("add_r16_r16");
       break;
   }
 }
@@ -643,6 +681,7 @@ CPU::dec_r16(uint16& regS)
     case 1:
       instruction_cycles = 0;
       next();
+      log_debug("dec_r16");
       break;
   }
 }
@@ -658,6 +697,7 @@ CPU::inc_r16(uint16& regS)
     case 1:
       instruction_cycles = 0;
       next();
+      log_debug("inc_r16");
       break;
   }
 }
@@ -675,6 +715,7 @@ CPU::and_r8(uint16& regS, CPU::RegisterBits regSB)
   setFlag(FlagBits::HalfCarry, true);
   setFlag(FlagBits::Carry, false);
   next();
+  log_debug("and_r8");
 }
 
 void
@@ -688,6 +729,7 @@ CPU::and_ar16(uint16& regS)
       break;
     case 1:
       tmp = ioData;
+      log_debug("and_ar16 [ignore next log]");
       and_r8(tmp, RegisterBits::Low); // next is called in and_r8
       instruction_cycles = 0;
       break;
@@ -705,6 +747,7 @@ CPU::and_n8()
       break;
     case 1:
       tmp = ioData;
+      log_debug("and_n8 0x%X [ignore next log]", tmp);
       and_r8(tmp, RegisterBits::Low); // next is called in and_r8
       instruction_cycles = 0;
       break;
@@ -720,6 +763,7 @@ CPU::cpl()
   setFlag(FlagBits::Subtract, true);
   setFlag(FlagBits::HalfCarry, true);
   next();
+  log_debug("cpl");
 }
 
 void
@@ -734,6 +778,7 @@ CPU::or_r8(uint16& regS, CPU::RegisterBits regSB)
   setFlag(FlagBits::HalfCarry, false);
   setFlag(FlagBits::Carry, false);
   next();
+  log_debug("or_r8");
 }
 
 void
@@ -747,6 +792,7 @@ CPU::or_ar16(uint16& regS)
       break;
     case 1:
       tmp = ioData;
+      log_debug("or_ar16 [ignore next log]");
       or_r8(tmp, RegisterBits::Low); // next is called in or_r8
       instruction_cycles = 0;
       break;
@@ -764,6 +810,7 @@ CPU::or_n8()
       break;
     case 1:
       tmp = ioData;
+      log_debug("or_n8 0x%X [ignore next log]", tmp);
       or_r8(tmp, RegisterBits::Low); // next is called in or_r8
       instruction_cycles = 0;
       break;
@@ -782,6 +829,7 @@ CPU::xor_r8(uint16& regS, CPU::RegisterBits regSB)
   setFlag(FlagBits::HalfCarry, false);
   setFlag(FlagBits::Carry, false);
   next();
+  log_debug("xor_r8");
 }
 
 void
@@ -795,6 +843,7 @@ CPU::xor_ar16(uint16& regS)
       break;
     case 1:
       tmp = ioData;
+      log_debug("xor_ar16 [ignore next log]");
       xor_r8(tmp, RegisterBits::Low); // next is called in xor_r8
       instruction_cycles = 0;
       break;
@@ -812,6 +861,7 @@ CPU::xor_n8()
       break;
     case 1:
       tmp = ioData;
+      log_debug("xor_n8 0x%X [ignore next log]", tmp);
       xor_r8(tmp, RegisterBits::Low); // next is called in xor_r8
       instruction_cycles = 0;
       break;
@@ -827,6 +877,7 @@ CPU::bit_r8(uint16& regS, CPU::RegisterBits regSB, uint8 bit)
   setFlag(FlagBits::Subtract, false);
   setFlag(FlagBits::HalfCarry, true);
   next();
+  log_debug("bit_r8");
 }
 
 void
@@ -840,6 +891,7 @@ CPU::bit_ar16(uint16& regS, uint8 bit)
       break;
     case 1:
       tmp = ioData;
+      log_debug("bit_ar16 [ignore next log]");
       bit_r8(tmp, RegisterBits::Low, bit); // next is called in bit_r8
       instruction_cycles = 0;
       break;
@@ -853,6 +905,7 @@ CPU::res_r8(uint16& regS, CPU::RegisterBits regSB, uint8 bit)
   val &= ~(1 << bit);
   setRegister(regS, val, regSB);
   next();
+  log_debug("res_r8");
 }
 
 void
@@ -872,6 +925,7 @@ CPU::res_ar16(uint16& regS, uint8 bit)
     case 2:
       instruction_cycles = 0;
       next();
+      log_debug("res_ar16");
       break;
   }
 }
@@ -883,6 +937,7 @@ CPU::set_r8(uint16& regS, CPU::RegisterBits regSB, uint8 bit)
   val |= (1 << bit);
   setRegister(regS, val, regSB);
   next();
+  log_debug("set_r8");
 }
 
 void
@@ -902,6 +957,7 @@ CPU::set_ar16(uint16& regS, uint8 bit)
     case 2:
       instruction_cycles = 0;
       next();
+      log_debug("set_ar16");
       break;
   }
 }
@@ -920,6 +976,7 @@ CPU::rl_r8(uint16& regS, CPU::RegisterBits regSB)
   setFlag(FlagBits::HalfCarry, false);
   setFlag(FlagBits::Carry, newCarry);
   next();
+  log_debug("rl_r8");
 }
 
 void
@@ -948,6 +1005,7 @@ CPU::rl_ar16(uint16& regS)
     case 2:
       instruction_cycles = 0;
       next();
+      log_debug("rl_ar16");
       break;
   }
 }
@@ -965,6 +1023,7 @@ CPU::rla()
   setFlag(FlagBits::HalfCarry, false);
   setFlag(FlagBits::Carry, newCarry);
   next();
+  log_debug("rla");
 }
 
 void
@@ -979,6 +1038,7 @@ CPU::rlc_r8(uint16& regS, CPU::RegisterBits regSB)
   setFlag(FlagBits::HalfCarry, false);
   setFlag(FlagBits::Carry, newCarry);
   next();
+  log_debug("rlc_r8");
 }
 
 void
@@ -1005,6 +1065,7 @@ CPU::rlc_ar16(uint16& regS)
     case 2:
       instruction_cycles = 0;
       next();
+      log_debug("rlc_ar16");
       break;
   }
 }
@@ -1021,6 +1082,7 @@ CPU::rlca()
   setFlag(FlagBits::HalfCarry, false);
   setFlag(FlagBits::Carry, newCarry);
   next();
+  log_debug("rlca");
 }
 
 void
@@ -1036,6 +1098,7 @@ CPU::rr_r8(uint16& regS, CPU::RegisterBits regSB)
   setFlag(FlagBits::HalfCarry, false);
   setFlag(FlagBits::Carry, newCarry);
   next();
+  log_debug("rr_r8");
 }
 
 void
@@ -1064,6 +1127,7 @@ CPU::rr_ar16(uint16& regS)
     case 2:
       instruction_cycles = 0;
       next();
+      log_debug("rr_ar16");
       break;
   }
 }
@@ -1081,6 +1145,7 @@ CPU::rra()
   setFlag(FlagBits::HalfCarry, false);
   setFlag(FlagBits::Carry, newCarry);
   next();
+  log_debug("rra");
 }
 
 void
@@ -1095,6 +1160,7 @@ CPU::rrc_r8(uint16& regS, CPU::RegisterBits regSB)
   setFlag(FlagBits::HalfCarry, false);
   setFlag(FlagBits::Carry, newCarry);
   next();
+  log_debug("rrc_r8");
 }
 
 void
@@ -1121,6 +1187,7 @@ CPU::rrc_ar16(uint16& regS)
     case 2:
       instruction_cycles = 0;
       next();
+      log_debug("rrc_ar16");
       break;
   }
 }
@@ -1137,6 +1204,7 @@ CPU::rrca()
   setFlag(FlagBits::HalfCarry, false);
   setFlag(FlagBits::Carry, newCarry);
   next();
+  log_debug("rrca");
 }
 
 void
@@ -1151,6 +1219,7 @@ CPU::sla_r8(uint16& regS, CPU::RegisterBits regSB)
   setFlag(FlagBits::HalfCarry, false);
   setFlag(FlagBits::Carry, newCarry);
   next();
+  log_debug("sla_r8");
 }
 
 void
@@ -1177,6 +1246,7 @@ CPU::sla_ar16(uint16& regS)
     case 2:
       instruction_cycles = 0;
       next();
+      log_debug("sla_ar16");
       break;
   }
 }
@@ -1193,6 +1263,7 @@ CPU::sra_r8(uint16& regS, CPU::RegisterBits regSB)
   setFlag(FlagBits::HalfCarry, false);
   setFlag(FlagBits::Carry, newCarry);
   next();
+  log_debug("sra_r8");
 }
 
 void
@@ -1219,6 +1290,7 @@ CPU::sra_ar16(uint16& regS)
     case 2:
       instruction_cycles = 0;
       next();
+      log_debug("sra_ar16");
       break;
   }
 }
@@ -1235,6 +1307,7 @@ CPU::srl_r8(uint16& regS, CPU::RegisterBits regSB)
   setFlag(FlagBits::HalfCarry, false);
   setFlag(FlagBits::Carry, newCarry);
   next();
+  log_debug("srl_r8");
 }
 
 void
@@ -1261,6 +1334,7 @@ CPU::srl_ar16(uint16& regS)
     case 2:
       instruction_cycles = 0;
       next();
+      log_debug("srl_ar16");
       break;
   }
 }
@@ -1276,6 +1350,7 @@ CPU::swap_r8(uint16& regS, CPU::RegisterBits regSB)
   setFlag(FlagBits::HalfCarry, false);
   setFlag(FlagBits::Carry, false);
   next();
+  log_debug("swap_r8");
 }
 
 void
@@ -1300,6 +1375,7 @@ CPU::swap_ar16(uint16& regS)
     case 2:
       instruction_cycles = 0;
       next();
+      log_debug("swap_ar16");
       break;
   }
 }
@@ -1341,6 +1417,7 @@ CPU::call_a16()
     case 5:
       instruction_cycles = 0;
       next();
+      log_debug("call_a16 0x%X", (highByte << 8) | lowByte);
       break;
   }
 }
@@ -1365,14 +1442,15 @@ CPU::call_cc(Condition flag)
         instruction_cycles++;
       } else {
         instruction_cycles = 0;
+        log_debug("call_cc 0x%X [not taking]", (ioData << 8) | lowByte);
         next();
       }
       break;
     case 3:
-      iduDec(SP);
       write(
         SP,
         (uint8)readRegister(PC, RegisterBits::High)); // push high byte of PC
+      iduDec(SP);
       instruction_cycles++;
       break;
     case 4:
@@ -1386,6 +1464,7 @@ CPU::call_cc(Condition flag)
     case 5:
       instruction_cycles = 0;
       next();
+      log_debug("call_cc 0x%X", (highByte << 8) | lowByte);
       break;
   }
 }
@@ -1395,6 +1474,7 @@ CPU::jp_r16(uint16& regS)
 {
   setRegister(PC, regS, RegisterBits::Full);
   next();
+  log_debug("jp_r16");
 }
 
 void
@@ -1416,6 +1496,7 @@ CPU::jp_a16()
       break;
     case 3:
       instruction_cycles = 0;
+      log_debug("jp_a16 0x%X",(ioData << 8) | lowByte);
       next();
       break;
   }
@@ -1440,11 +1521,13 @@ CPU::jp_cc_a16(Condition flag)
         instruction_cycles++;
       } else {
         instruction_cycles = 0;
+        log_debug("jp_cc_a16 0x%X [not taking]", (ioData << 8) | lowByte);
         next();
       }
       break;
     case 3:
       instruction_cycles = 0;
+      log_debug("jp_cc_a16 0x%X", (ioData << 8) | lowByte);
       next();
       break;
   }
@@ -1466,6 +1549,7 @@ CPU::jr_a8()
       break;
     case 2:
       instruction_cycles = 0;
+      log_debug("jr_a8 0x%X", ioData << 8);
       next();
       break;
   }
@@ -1486,11 +1570,13 @@ CPU::jr_cc_a8(Condition flag)
         instruction_cycles++;
       } else {
         instruction_cycles = 0;
+        log_debug("jr_cc_a8 0x%X [not taking]", ioData << 8);
         next();
       }
       break;
     case 2:
       instruction_cycles = 0;
+      log_debug("jr_cc_a8 0x%X", ioData << 8);
       next();
       break;
   }
@@ -1510,6 +1596,7 @@ CPU::ret_cc(Condition flag)
         instruction_cycles++;
       } else {
         instruction_cycles = 0;
+        log_debug("ret_cc [not taking]");
         next();
       }
       break;
@@ -1525,6 +1612,7 @@ CPU::ret_cc(Condition flag)
       break;
     case 4:
       instruction_cycles = 0;
+      log_debug("ret_cc");
       next();
       break;
   }
@@ -1552,6 +1640,7 @@ CPU::ret()
     case 3:
       instruction_cycles = 0;
       next();
+      log_debug("ret")
       break;
   }
 }
@@ -1579,6 +1668,7 @@ CPU::reti()
     case 3:
       instruction_cycles = 0;
       next();
+      log_debug("reti");
       break;
   }
 }
@@ -1608,6 +1698,7 @@ CPU::rst()
     case 3:
       instruction_cycles = 0;
       next();
+      log_debug("rst 0x%X", curr_opcode);
       break;
   }
 }
@@ -1621,6 +1712,7 @@ CPU::ccf()
   setFlag(FlagBits::Subtract, false);
   setFlag(FlagBits::HalfCarry, false);
   next();
+  log_debug("ccf");
 }
 
 void
@@ -1630,6 +1722,8 @@ CPU::scf()
   setFlag(FlagBits::Subtract, false);
   setFlag(FlagBits::HalfCarry, false);
   next();
+  log_debug("scf");
+
 }
 
 // stack manipulation instructions
@@ -1654,9 +1748,11 @@ CPU::add_sp_e8()
       instruction_cycles++;
       break;
     case 2:
+      instruction_cycles++;
       break;
     case 3:
       instruction_cycles = 0;
+      log_debug("add_sp_e8 0x%X", ioData);
       next();
       break;
   }
@@ -1690,6 +1786,7 @@ CPU::ld_a16_sp()
     case 4:
       instruction_cycles = 0;
       next();
+      log_debug("ld_a16_sp 0x%X", (highByte << 8) | lowByte);
       break;
   }
 }
@@ -1716,6 +1813,7 @@ CPU::ld_hl_sp_e8()
       break;
     case 2:
       instruction_cycles = 0;
+      log_debug("ld_hl_sp_e8 0x%X", ioData);
       next();
       break;
   }
@@ -1734,6 +1832,7 @@ CPU::ld_r16_r16(uint16& regD, uint16& regS)
     case 1:
       instruction_cycles = 0;
       next();
+      log_debug("ld_r16_r16");
       break;
   }
 }
@@ -1757,6 +1856,7 @@ CPU::pop_r16(uint16& regS)
       setRegister(regS, (ioData << 8) | lowByte, RegisterBits::Full);
       instruction_cycles = 0;
       next();
+      log_debug("pop_r16");
       break;
   }
 }
@@ -1783,6 +1883,7 @@ CPU::push_r16(uint16& regS)
     case 3:
       instruction_cycles = 0;
       next();
+      log_debug("push_r16");
       break;
   }
 }
@@ -1793,6 +1894,7 @@ CPU::di()
 {
   ime = Ime::Disable;
   next();
+  log_debug("di");
 }
 
 void
@@ -1802,6 +1904,7 @@ CPU::ei()
     ime = Ime::RequestEnable;
   }
   next();
+  log_debug("ei");
 }
 
 void
@@ -1815,6 +1918,7 @@ CPU::halt()
     return;
   }
   iduInc(PC);
+  log_debug("halt");
 }
 
 void
@@ -1845,18 +1949,22 @@ CPU::daa()
   setFlag(FlagBits::Carry, carry);
   setFlag(FlagBits::HalfCarry, false);
   next();
+  log_debug("daa");
 }
 
 void
 CPU::nop()
 {
   next();
+  log_debug("nop");
 }
 
 void
 CPU::stop()
 {
   // TODO
+  next();
+  log_debug("stop");
 }
 
 void
@@ -1864,4 +1972,5 @@ CPU::prefix_cb()
 {
   use_prefix_instruction = true;
   next();
+  log_debug("prefix_cb");
 }

@@ -21,14 +21,26 @@ PPU::initialize()
   OBP1 = 0xFF;
   WY = 0;
   WX = 0;
+  scanline_ticks = 395;
+  internal_enable_lyc_eq_ly_irq = true;
+  use_turn_on_oam_scan = false;
+  last_stat_irq = false;
   mode = PpuMode::VBlank;
   dma_state = DMAState::Inactive;
   dma_transferes = 0;
+  num_of_oam_entries = 0;
+  for (int i = 0; i < 256; i++) {
+    oam_buffer[i].clear();
+  }
 }
 
 void
-PPU::tick_dma()
+PPU::tick_dma(uint64 Tcycle)
 {
+  // DMA transfer happens 1 every M-cycle
+  if (Tcycle % 4 != 3) {
+    return;
+  }
   if (dma_state == DMAState::Request) {
     dma_state = DMAState::Active;
     dma_transferes = 0;
@@ -58,6 +70,11 @@ PPU::tick_dma()
 void
 PPU::tick()
 {
+  if ((LCDC & 0x80) == 0) {
+    // LCD is off
+    return;
+  }
+
   switch (mode) {
     case PpuMode::OamSearch:
       OamSearch();
@@ -72,30 +89,117 @@ PPU::tick()
       VBlank();
       break;
   }
+
+  bool lyc_eq_ly = (LYC == LY) && internal_enable_lyc_eq_ly_irq;
+  bool lyc_eq_ly_irq = (STAT & 0x40) && lyc_eq_ly;
+
+  bool hblank_irq =
+    (STAT & 0x08) && ((STAT & 0x03) == static_cast<int>(PpuMode::HBlank));
+  bool vblank_irq =
+    (STAT & 0x10) && ((STAT & 0x03) == static_cast<int>(PpuMode::VBlank));
+  bool oam_irq =
+    (STAT & 0x20) && ((STAT & 0x03) == static_cast<int>(PpuMode::OamSearch));
+
+  STAT = (STAT & 0xFE) | (lyc_eq_ly ? 1 : 0);
+
+  bool request_irq = lyc_eq_ly_irq || hblank_irq || vblank_irq || oam_irq;
+  if (request_irq && !last_stat_irq) {
+    mmu->requestInterrupt(Interrupt::LCDStat);
+  }
+  last_stat_irq = request_irq;
 }
 
 void
 PPU::OamSearch()
 {
-  // OAM Search logic
+  // OAM search gets one oam entry per 2 ticks
+  if (num_of_oam_entries < 10 && (scanline_ticks % 2) == 1) {
+    // TODO handle oam bug
+    uint8 y_byte = mmu->read(OamStart + 4 * scanline_ticks / 2, Component::PPU);
+    uint8 x_byte =
+      mmu->read(OamStart + 4 * scanline_ticks / 2 + 1, Component::PPU);
+
+    uint8 obj_size = 8 << ((LCDC >> 2) & 1);
+    const int32 obj_y = y_byte - 16;
+    if (obj_y <= LY && LY < (obj_y + obj_size)) {
+      oam_entry entry;
+      entry.oam_number = scanline_ticks / 2;
+      entry.y = y_byte;
+      entry.x = x_byte;
+      oam_buffer[x_byte].push_back(entry);
+      num_of_oam_entries++;
+    }
+  }
+  scanline_ticks++;
+  if (scanline_ticks >= 80) {
+    setMode(PpuMode::PixelTransfer);
+  }
 }
 
 void
 PPU::PixelTransfer()
 {
   // Pixel Transfer logic
+  scanline_ticks++;
+  if (scanline_ticks == (80 + 200)) {
+    setMode(PpuMode::HBlank);
+  }
 }
 
 void
 PPU::HBlank()
 {
+  if (use_turn_on_oam_scan) {
+    // really strange situation that happens when turning on the LCD
+    // we're in hbalnk mode and doing oam scan without actually scanning
+    // anything after 80 ticks we go to pixel transfer mode as normal
+    scanline_ticks++;
+    if (scanline_ticks >= 80) {
+      use_turn_on_oam_scan = false;
+      setMode(PpuMode::PixelTransfer);
+    }
+    return;
+  }
   // HBlank logic
+  scanline_ticks++;
+  internal_enable_lyc_eq_ly_irq = !(scanline_ticks == 454);
+  if (scanline_ticks == 454) {
+    LY++;
+  }
+  if (scanline_ticks >= 456) {
+    if (LY >= 144) {
+      setMode(PpuMode::VBlank);
+      mmu->requestInterrupt(Interrupt::VBlank);
+    } else {
+      setMode(PpuMode::OamSearch);
+    }
+    scanline_ticks = 0;
+    for (int i = 0; i < 256; i++) {
+      oam_buffer[i].clear();
+    }
+  }
 }
 
 void
 PPU::VBlank()
 {
-  // VBlank logic
+  scanline_ticks++;
+  internal_enable_lyc_eq_ly_irq = !(scanline_ticks == 454);
+  if (scanline_ticks == 454) {
+    LY++;
+    if (LY >= 154) {
+      LY = 0;
+    }
+  }
+  if (scanline_ticks >= 456) {
+    if (LY == 0) {
+      setMode(PpuMode::OamSearch);
+      for (int i = 0; i < 256; i++) {
+        oam_buffer[i].clear();
+      }
+    }
+    scanline_ticks = 0;
+  }
 }
 
 uint8
@@ -135,9 +239,12 @@ PPU::read(uint16 addr) const
 void
 PPU::write(uint16 addr, uint8 val)
 {
+  uint8 tmp = 0;
   switch (addr) {
     case 0xFF40:
+      tmp = LCDC;
       LCDC = val;
+      handleLCDCChanges(tmp);
       break;
     case 0xFF41:
       // Only bits [3-6] are writable
@@ -178,5 +285,40 @@ PPU::write(uint16 addr, uint8 val)
     default:
       log_error("Attempted to write to invalid ppu address: 0x%04x", addr);
       break;
+  }
+}
+
+void
+PPU::setMode(PpuMode new_mode, bool update_only_stat)
+{
+  if (!update_only_stat) {
+    mode = new_mode;
+  }
+  // Update STAT register mode bits
+  STAT = (STAT & 0xFC) | static_cast<uint8>(mode);
+}
+
+void
+PPU::handleLCDCChanges(uint8 old_val)
+{
+  bool old_lcd_enabled = old_val & 0x80;
+  bool new_lcd_enabled = LCDC & 0x80;
+  if (old_lcd_enabled == new_lcd_enabled) {
+    // No change in LCD enabled state
+    return;
+  }
+
+  if (!new_lcd_enabled) {
+    scanline_ticks = 0;
+    LY = 0;
+    setMode(PpuMode::HBlank);
+    for (int i = 0; i < 256; i++) {
+      oam_buffer[i].clear();
+    }
+    // TODO clear oam buffer and fifo if needed
+  } else {
+    use_turn_on_oam_scan = true;
+    bool lyc_eq_ly = (LYC == LY) && internal_enable_lyc_eq_ly_irq;
+    STAT = (STAT & 0xFE) | (lyc_eq_ly ? 1 : 0);
   }
 }

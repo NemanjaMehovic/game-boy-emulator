@@ -40,6 +40,8 @@ private:
     uint8 vram[VramSize] = {0};
     uint8 oam[OamSize] = {0};
     uint8 hram[HramSize] = {0};
+    uint8 sb = 0;
+    uint8 sc = 0x7E;
 
     bool dma_active = false;
 };

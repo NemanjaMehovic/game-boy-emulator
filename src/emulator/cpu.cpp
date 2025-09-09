@@ -51,25 +51,64 @@ CPU::initialize()
 void
 CPU::cycle()
 {
+  bool servicingInterrupt = false;
   if (instruction_cycles == 0) {
-
     uint8 interrupts = getInterrupts();
     if (interrupts != 0 && !use_prefix_instruction) {
       halted = false;
       if (ime == Ime::Enable) {
         current_instruction = std::bind(&CPU::serviceInterrupt, this);
+        servicingInterrupt = true;
+        log_debug("DEBUG_STATE A:%02X F:%02X B:%02X C:%02X D:%02X E:%02X H:%02X "
+                "L:%02X SP:%04X PC:%04X PCMEM:%02X,%02X,%02X,%02X",
+                readRegister(AF, RegisterBits::High),
+                readRegister(AF, RegisterBits::Low),
+                readRegister(BC, RegisterBits::High),
+                readRegister(BC, RegisterBits::Low),
+                readRegister(DE, RegisterBits::High),
+                readRegister(DE, RegisterBits::Low),
+                readRegister(HL, RegisterBits::High),
+                readRegister(HL, RegisterBits::Low),
+                SP,
+                PC - 1,
+                mmu->read(PC - 1, Component::CPU),
+                mmu->read(PC, Component::CPU),
+                mmu->read(PC + 1, Component::CPU),
+                mmu->read(PC + 2, Component::CPU));
       }
     }
 
-    if (use_prefix_instruction) {
-      current_instruction = fetchPrefixInstruction(ioData);
-      use_prefix_instruction = false;
-    } else {
-      if (bad_opcodes.find(ioData) != bad_opcodes.end()) {
-        log_error("Bad opcode: 0x%02X", ioData);
-        abort();
+    if (!servicingInterrupt) {
+      if (use_prefix_instruction) {
+        current_instruction = fetchPrefixInstruction(ioData);
+        use_prefix_instruction = false;
+      } else {
+        if (bad_opcodes.find(ioData) != bad_opcodes.end()) {
+          log_error("Bad opcode: 0x%02X", ioData);
+          abort();
+        }
+        if (!halted || servicingInterrupt) {
+        // A:00 F:11 B:22 C:33 D:44 E:55 H:66 L:77 SP:8888 PC:9999
+        // PCMEM:AA,BB,CC,DD
+        log_debug("DEBUG_STATE A:%02X F:%02X B:%02X C:%02X D:%02X E:%02X H:%02X "
+                "L:%02X SP:%04X PC:%04X PCMEM:%02X,%02X,%02X,%02X",
+                readRegister(AF, RegisterBits::High),
+                readRegister(AF, RegisterBits::Low),
+                readRegister(BC, RegisterBits::High),
+                readRegister(BC, RegisterBits::Low),
+                readRegister(DE, RegisterBits::High),
+                readRegister(DE, RegisterBits::Low),
+                readRegister(HL, RegisterBits::High),
+                readRegister(HL, RegisterBits::Low),
+                SP,
+                PC - 1,
+                mmu->read(PC - 1, Component::CPU),
+                mmu->read(PC, Component::CPU),
+                mmu->read(PC + 1, Component::CPU),
+                mmu->read(PC + 2, Component::CPU));
+        }
+        current_instruction = opcode_map.at(ioData);
       }
-      current_instruction = opcode_map.at(ioData);
     }
     // not correct when servicing an interrupt
     curr_opcode = ioData;
@@ -85,7 +124,7 @@ CPU::cycle()
       (ime == Ime::PendingEnable || ime == Ime::RequestEnable)) {
     // ime will be enabled after the next instruction
     if (ime == Ime::RequestEnable) {
-      ime == Ime::PendingEnable;
+      ime = Ime::PendingEnable;
     } else {
       ime = Ime::Enable;
     }
@@ -370,6 +409,7 @@ CPU::serviceInterrupt()
       for (const auto& [bit, vector] : interrupt_vectors) {
         if ((getInterrupts() & bit) != 0) {
           // clear the interrupt flag
+          log_debug("Servicing interrupt 0x%X", vector);
           IFR &= ~bit;
           setRegister(PC, vector, RegisterBits::Full);
         }

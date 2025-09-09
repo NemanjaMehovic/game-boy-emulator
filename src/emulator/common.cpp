@@ -2,6 +2,7 @@
 
 #include <cstring>
 #include <ctime>
+#include <fstream>
 #include <iostream>
 
 char*
@@ -18,5 +19,12 @@ void
 Logger::log(std::string msg)
 {
   std::lock_guard<std::mutex> guard(logger_lock);
+  if (DEBUG_ENABLED) {
+    if (myfile.is_open()) {
+      myfile << msg << std::endl;
+      myfile.flush();
+      return;
+    }
+  }
   std::cout << msg << std::endl;
 }
