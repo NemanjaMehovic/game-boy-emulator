@@ -62,11 +62,16 @@ constexpr uint16 ApuEnd = 0xFF3F;
 // Serial Registers
 constexpr uint16 SerialStart = 0xFF01;
 constexpr uint16 SerialEnd = 0xFF02;
-// Interrup Registers
+// Interrupt Registers
 constexpr uint16 IFRAddr = 0xFF0F;
 constexpr uint16 IEAddr = 0xFFFF;
 // BootRom Register
 constexpr uint16 BootRomAddr = 0xFF50;
+
+// Gameboy screen resolution
+constexpr int GB_WIDTH = 160;
+constexpr int GB_HEIGHT = 144;
+const uint32 GB_COLORS[4] = { 0xFFFFFFFF, 0xFF3b3b3b, 0xFF222222, 0xFF000000 };
 
 enum class Interrupt
 {

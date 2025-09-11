@@ -288,9 +288,7 @@ CPU::ld_r8_ar16i(uint16& regD, CPU::RegisterBits regDB, uint16& regS)
       instruction_cycles++;
       break;
     case 1:
-      log_debug("Before set regD = 0x%02X ioData = 0x%02X", readRegister(regD, regDB), ioData);
       setRegister(regD, ioData, regDB);
-      log_debug("After set regD = 0x%02X ioData = 0x%02X", readRegister(regD, regDB), ioData);
       instruction_cycles = 0;
       next();
       log_debug("ld_r8_ar16i");

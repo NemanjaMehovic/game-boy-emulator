@@ -11,9 +11,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
+find_package(SDL2 REQUIRED)
 
 include_directories(inc/gui)
 include_directories(inc/emulator)
+include_directories(${SDL2_INCLUDE_DIRS})
 
 file (GLOB HEADERS "${PROJECT_SOURCE_DIR}/inc/*/*")
 file (GLOB SRC "${PROJECT_SOURCE_DIR}/src/*/*")
@@ -35,7 +37,7 @@ else()
     )
 endif()
 
-target_link_libraries(GBemulator PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+target_link_libraries(GBemulator PRIVATE Qt${QT_VERSION_MAJOR}::Widgets ${SDL2_LIBRARIES})
 
 include(GNUInstallDirs)
 install(TARGETS GBemulator

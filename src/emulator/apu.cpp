@@ -1,5 +1,4 @@
 #include "apu.h"
-#include <cstring>
 
 APU::APU()
 {
@@ -36,15 +35,15 @@ APU::initialize()
   nr52 = 0xF1; // Sound on/off
 
   // Wave RAM (16 bytes)
-  std::memset(wave_ram, 0, sizeof(wave_ram));
+  for(int i = 0; i < 16; i++) {
+   wave_ram[i] = 0;
+  }
 }
 
 void
 APU::tick()
 {
   // TODO
-  // we might have to implement this if something depends on the wave ram being
-  // correct
 }
 
 uint8

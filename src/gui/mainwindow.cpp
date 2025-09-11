@@ -40,6 +40,11 @@ void
 MainWindow::on_pushButton_2_clicked()
 {
   if (m_emulator) {
-    m_emulator->cycleFrame();
+    hide();
+    m_emulator->mainLoop();
+    show();
   }
+  // if (m_emulator) {
+  //   m_emulator->cycleFrame();
+  // }
 }

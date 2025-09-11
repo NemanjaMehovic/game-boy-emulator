@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <string>
+#include <thread>
 
 #include "apu.h"
 #include "cartridge.h"
@@ -15,9 +16,13 @@ class Emulator
 {
 public:
   Emulator(std::string file);
+  ~Emulator();
 
   void cycleFrame();
+  void run();
   bool isValid();
+  void mainLoop();
+  std::thread* m_gameThread = nullptr;
 
 private:
   std::unique_ptr<Cartridge> m_cartridge;

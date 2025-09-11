@@ -409,7 +409,7 @@ CPU::serviceInterrupt()
       for (const auto& [bit, vector] : interrupt_vectors) {
         if ((getInterrupts() & bit) != 0) {
           // clear the interrupt flag
-          log_debug("Servicing interrupt 0x%X", vector);
+          log_info("Servicing interrupt 0x%X", vector);
           IFR &= ~bit;
           setRegister(PC, vector, RegisterBits::Full);
         }

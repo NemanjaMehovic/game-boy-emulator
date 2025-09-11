@@ -85,11 +85,11 @@ MMU::write_wram(uint16 addr, uint8 val, Component component)
 uint8
 MMU::read_vram(uint16 addr, Component component)
 {
+  if (dma_active && component != Component::DMA) {
+    log_error("Attempted to read from VRAM during DMA transfer");
+    return 0xFF;
+  }
   if (component == Component::CPU) {
-    if (dma_active) {
-      log_error("Attempted to read from VRAM during DMA transfer");
-      return 0xFF;
-    }
     if (ppu->getMode() == PpuMode::PixelTransfer) {
       log_error("Attempted to read from VRAM during PPU Mode 3");
       return 0xFF;
@@ -101,13 +101,12 @@ MMU::read_vram(uint16 addr, Component component)
 void
 MMU::write_vram(uint16 addr, uint8 val, Component component)
 {
+  if (dma_active && component != Component::DMA) {
+    log_error("Attempted to write from VRAM during DMA transfer");
+    return;
+  }
   if (component == Component::CPU) {
-    if (dma_active) {
-      log_error("Attempted to write to VRAM during DMA transfer");
-      return;
-    }
     if (ppu->getMode() == PpuMode::PixelTransfer) {
-      log_error("Attempted to write to VRAM during PPU Mode 3");
       return;
     }
   }
@@ -117,11 +116,11 @@ MMU::write_vram(uint16 addr, uint8 val, Component component)
 uint8
 MMU::read_oam(uint16 addr, Component component)
 {
+  if (dma_active && component != Component::DMA) {
+    log_error("Attempted to read from OAM during DMA transfer");
+    return 0xFF;
+  }
   if (component == Component::CPU) {
-    if (dma_active) {
-      log_error("Attempted to read from OAM during DMA transfer");
-      return 0xFF;
-    }
     if (ppu->getMode() == PpuMode::OamSearch ||
         ppu->getMode() == PpuMode::PixelTransfer) {
       log_error("Attempted to read from OAM during PPU Mode 3 or 2");
@@ -134,11 +133,11 @@ MMU::read_oam(uint16 addr, Component component)
 void
 MMU::write_oam(uint16 addr, uint8 val, Component component)
 {
+  if (dma_active && component != Component::DMA) {
+    log_error("Attempted to write to OAM during DMA transfer");
+    return;
+  }
   if (component == Component::CPU) {
-    if (dma_active) {
-      log_error("Attempted to write to OAM during DMA transfer");
-      return;
-    }
     if (ppu->getMode() == PpuMode::OamSearch ||
         ppu->getMode() == PpuMode::PixelTransfer) {
       log_error("Attempted to write to OAM during PPU Mode 3 or 2");
