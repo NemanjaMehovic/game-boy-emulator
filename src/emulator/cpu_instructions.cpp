@@ -1638,7 +1638,8 @@ CPU::ret()
     case 3:
       instruction_cycles = 0;
       next();
-      log_debug("ret") break;
+      log_debug("ret");
+      break;
   }
 }
 
