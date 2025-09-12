@@ -35,8 +35,8 @@ APU::initialize()
   nr52 = 0xF1; // Sound on/off
 
   // Wave RAM (16 bytes)
-  for(int i = 0; i < 16; i++) {
-   wave_ram[i] = 0;
+  for (int i = 0; i < 16; i++) {
+    wave_ram[i] = 0;
   }
 }
 

@@ -84,9 +84,7 @@ MBC_Handler::load()
     log_info("Failed to find or load save");
     return;
   }
-  for (uint32 i = 0; i < m_ram_size; i++) {
-    file >> m_ram[i];
-  }
+  file.read((char*)m_ram.get(), m_ram_size);
   log_info("Done loading");
 }
 

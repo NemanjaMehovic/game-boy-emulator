@@ -73,7 +73,7 @@ constexpr uint16 JoypadAddr = 0xFF00;
 // Gameboy screen resolution
 constexpr int GB_WIDTH = 160;
 constexpr int GB_HEIGHT = 144;
-const uint32 GB_COLORS[4] = { 0xFFFFFFFF, 0xFF3b3b3b, 0xFF222222, 0xFF000000 };
+const uint32 GB_COLORS[4] = { 0xFF9bbc0f, 0xFF8bac0f, 0xFF306230, 0xFF0f380f };
 
 enum class Interrupt
 {

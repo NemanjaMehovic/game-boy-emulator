@@ -1,8 +1,8 @@
 #include "emulator.h"
 
 #include <SDL2/SDL.h>
-#include <thread>
 #include <chrono>
+#include <thread>
 
 #include "common.h"
 
@@ -19,8 +19,12 @@ Emulator::Emulator(std::string file)
   m_timer = std::make_unique<Timer>();
   m_apu = std::make_unique<APU>();
   m_joypad = std::make_unique<Joypad>();
-  m_mmu = std::make_unique<MMU>(
-    m_cpu.get(), m_cartridge.get(), m_ppu.get(), m_timer.get(), m_apu.get(), m_joypad.get());
+  m_mmu = std::make_unique<MMU>(m_cpu.get(),
+                                m_cartridge.get(),
+                                m_ppu.get(),
+                                m_timer.get(),
+                                m_apu.get(),
+                                m_joypad.get());
   m_cpu->setMMU(m_mmu.get());
   m_ppu->setMMU(m_mmu.get());
   m_timer->setMMU(m_mmu.get());
@@ -51,8 +55,8 @@ Emulator::cycleFrame()
       if ((m_Tcycles % 4) == 3) {
         m_timer->M_tick();
       }
-      m_ppu->tick(m_Tcycles);
       m_ppu->tick_dma(m_Tcycles);
+      m_ppu->tick(m_Tcycles);
       m_apu->tick();
       m_Tcycles++;
     }
@@ -67,6 +71,55 @@ Emulator::cycleFrame()
     m_ppu->tick_dma(m_Tcycles);
     m_apu->tick();
     m_Tcycles++;
+  }
+}
+
+void
+Emulator::HandleSdlEvent(SDL_Event& event)
+{
+  const std::unordered_map<SDL_KeyCode, JoypadInputs> translation_map = {
+    { SDLK_w, JoypadInputs::UP },         { SDLK_s, JoypadInputs::DOWN },
+    { SDLK_a, JoypadInputs::LEFT },       { SDLK_d, JoypadInputs::RIGHT },
+    { SDLK_SPACE, JoypadInputs::SELECT }, { SDLK_LSHIFT, JoypadInputs::START },
+    { SDLK_o, JoypadInputs::A },          { SDLK_p, JoypadInputs::B },
+  };
+  switch (event.type) {
+    case SDL_KEYUP:
+      switch (event.key.keysym.sym) {
+        case SDLK_w:
+        case SDLK_a:
+        case SDLK_s:
+        case SDLK_d:
+        case SDLK_SPACE:
+        case SDLK_LSHIFT:
+        case SDLK_o:
+        case SDLK_p:
+          m_joypad->handleButton(
+            translation_map.at((SDL_KeyCode)event.key.keysym.sym), true);
+          break;
+        default:
+          break;
+      }
+      break;
+    case SDL_KEYDOWN:
+      switch (event.key.keysym.sym) {
+        case SDLK_w:
+        case SDLK_a:
+        case SDLK_s:
+        case SDLK_d:
+        case SDLK_SPACE:
+        case SDLK_LSHIFT:
+        case SDLK_o:
+        case SDLK_p:
+          m_joypad->handleButton(
+            translation_map.at((SDL_KeyCode)event.key.keysym.sym), false);
+          break;
+        default:
+          break;
+      }
+      break;
+    default:
+      break;
   }
 }
 
@@ -100,22 +153,20 @@ Emulator::mainLoop()
                                  SCREEN_WIDTH,
                                  SCREEN_HEIGHT);
   bool running = true;
-  auto startTime= std::chrono::steady_clock::now();
-  const double FPSMAX=1000.0/59.7;
+  const double FPSMAX = 1000.0 / 59.7;
   while (running) {
-    auto endTime = std::chrono::steady_clock::now();
-	  std::chrono::duration<double, std::milli> delta = endTime - startTime;
-    startTime = endTime;
-     
+    std::chrono::duration<double, std::milli> delta;
+
     auto frameStart = std::chrono::steady_clock::now();
     SDL_Event e;
     while (SDL_PollEvent(&e) > 0) {
       if (e.type == SDL_WINDOWEVENT &&
           e.window.event == SDL_WINDOWEVENT_CLOSE) {
         running = false;
+      } else {
+        HandleSdlEvent(e);
       }
     }
-
 
     cycleFrame();
 
@@ -142,11 +193,11 @@ Emulator::mainLoop()
     SDL_RenderPresent(sdlRenderer);
 
     auto frameEnd = std::chrono::steady_clock::now();
-    delta = endTime - startTime;
+    delta = frameEnd - frameStart;
 
-    if (delta.count() < FPSMAX)
-    {
-      std::this_thread::sleep_for(std::chrono::nanoseconds(static_cast<int64>((FPSMAX - delta.count()) * 1000000)));
+    if (delta.count() < FPSMAX) {
+      std::this_thread::sleep_for(std::chrono::nanoseconds(
+        static_cast<int64>((FPSMAX - delta.count()) * 1000000)));
     }
   }
 

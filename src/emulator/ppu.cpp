@@ -42,7 +42,7 @@ void
 PPU::tick_dma(uint64 Tcycle)
 {
   // DMA transfer happens 1 every M-cycle
-  if (Tcycle % 4 != 3) {
+  if (Tcycle % 4 != 0) {
     return;
   }
   if (dma_state == DMAState::Request) {

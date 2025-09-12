@@ -1,7 +1,4 @@
-#include <QApplication>
-
 #include "emulator.h"
-#include "mainwindow.h"
 
 int
 main(int argc, char* argv[])
@@ -17,6 +14,8 @@ main(int argc, char* argv[])
   }
   std::string file = argv[1];
   std::unique_ptr<Emulator> m_emulator = std::make_unique<Emulator>(file);
-  m_emulator->mainLoop();
+  if (m_emulator->isValid()) {
+    m_emulator->mainLoop();
+  }
   return 0;
 }

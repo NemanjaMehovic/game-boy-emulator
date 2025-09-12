@@ -1494,7 +1494,7 @@ CPU::jp_a16()
       break;
     case 3:
       instruction_cycles = 0;
-      log_debug("jp_a16 0x%X",(ioData << 8) | lowByte);
+      log_debug("jp_a16 0x%X", (ioData << 8) | lowByte);
       next();
       break;
   }
@@ -1638,8 +1638,7 @@ CPU::ret()
     case 3:
       instruction_cycles = 0;
       next();
-      log_debug("ret")
-      break;
+      log_debug("ret") break;
   }
 }
 
@@ -1721,7 +1720,6 @@ CPU::scf()
   setFlag(FlagBits::HalfCarry, false);
   next();
   log_debug("scf");
-
 }
 
 // stack manipulation instructions
@@ -1911,7 +1909,11 @@ CPU::halt()
   halted = getInterrupts() == 0;
   instruction_cycles = 0;
   read(PC);
-  log_debug("halt halted = %d IME = %d IFR = %d IER = %d", halted, ime == Ime::Enable, IFR, IER);
+  log_debug("halt halted = %d IME = %d IFR = %d IER = %d",
+            halted,
+            ime == Ime::Enable,
+            IFR,
+            IER);
   if (ime != Ime::Enable && !halted) {
     return;
   }

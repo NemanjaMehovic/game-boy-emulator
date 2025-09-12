@@ -1,6 +1,7 @@
 #ifndef EMULATOR_H
 #define EMULATOR_H
 
+#include <SDL2/SDL.h>
 #include <memory>
 #include <string>
 #include <thread>
@@ -8,10 +9,10 @@
 #include "apu.h"
 #include "cartridge.h"
 #include "cpu.h"
+#include "joypad.h"
 #include "mmu.h"
 #include "ppu.h"
 #include "timer.h"
-#include "joypad.h"
 
 class Emulator
 {
@@ -26,6 +27,7 @@ public:
   std::thread* m_gameThread = nullptr;
 
 private:
+  void HandleSdlEvent(SDL_Event& event);
   std::unique_ptr<Cartridge> m_cartridge;
   std::unique_ptr<CPU> m_cpu;
   std::unique_ptr<PPU> m_ppu;

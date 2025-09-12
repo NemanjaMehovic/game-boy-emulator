@@ -4,33 +4,45 @@
 void
 Joypad::initialize()
 {
-  joypad_state = 0xFF; // All buttons released
-  joypad_select = 0x00; // 0x00 for directional, 0x10 for action buttons
-  is_directional = true; // true if directional buttons are selected
-  is_action = false; // true if action buttons are selected
+  select_high = true;
+  dpad_high = true;
+  buttons = 0xFF;
 }
 
 void
-Joypad::handleButton(uint8 button, bool pressed)
+Joypad::handleButton(JoypadInputs button, bool released)
 {
-  
+  if (released) {
+    buttons |= static_cast<uint8>(button);
+  } else {
+    buttons &= ~(static_cast<uint8>(button));
+  }
+
+  bool irq =
+    (!released) && ((!select_high && static_cast<uint8>(button) >= 0x10) ||
+                    (!dpad_high && static_cast<uint8>(button) < 0x10));
+  if (irq) {
+    mmu->requestInterrupt(Interrupt::Joypad);
+  }
 }
 
 void
 Joypad::write(uint8 val)
 {
-  
+  select_high = val & 0x20;
+  dpad_high = val & 0x10;
 }
 
 uint8
 Joypad::read()
 {
-  uint8 result = joypad_state;
-  if (is_directional) {
-    result &= 0x0F; // Only directional buttons
-  } else if (is_action) {
-    result &= 0xF0; // Only action buttons
+  uint8 ret = 0xC0 | (select_high ? 0x20 : 0) | (dpad_high ? 0x10 : 0);
+  uint8 tmp_keys = 0x0F;
+  if (!select_high) {
+    tmp_keys &= (buttons >> 4);
   }
-  result |= joypad_select; // Add the select bits
-  return result;
+  if (!dpad_high) {
+    tmp_keys &= buttons;
+  }
+  return ret | tmp_keys;
 }

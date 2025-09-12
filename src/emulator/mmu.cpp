@@ -1,7 +1,12 @@
 #include "mmu.h"
 #include "common.h"
 
-MMU::MMU(CPU* cpu, Cartridge* cartridge, PPU* ppu, Timer* timer, APU* apu, Joypad* joypad)
+MMU::MMU(CPU* cpu,
+         Cartridge* cartridge,
+         PPU* ppu,
+         Timer* timer,
+         APU* apu,
+         Joypad* joypad)
   : cpu(cpu)
   , cartridge(cartridge)
   , ppu(ppu)
@@ -86,12 +91,8 @@ MMU::write_wram(uint16 addr, uint8 val, Component component)
 uint8
 MMU::read_vram(uint16 addr, Component component)
 {
-  if (dma_active && component != Component::DMA) {
-    log_error("Attempted to read from VRAM during DMA transfer");
-    return 0xFF;
-  }
   if (component == Component::CPU) {
-    if (ppu->getMode() == PpuMode::PixelTransfer) {
+    if (dma_active || ppu->getMode() == PpuMode::PixelTransfer) {
       log_error("Attempted to read from VRAM during PPU Mode 3");
       return 0xFF;
     }
@@ -102,12 +103,8 @@ MMU::read_vram(uint16 addr, Component component)
 void
 MMU::write_vram(uint16 addr, uint8 val, Component component)
 {
-  if (dma_active && component != Component::DMA) {
-    log_error("Attempted to write from VRAM during DMA transfer");
-    return;
-  }
   if (component == Component::CPU) {
-    if (ppu->getMode() == PpuMode::PixelTransfer) {
+    if (dma_active || ppu->getMode() == PpuMode::PixelTransfer) {
       return;
     }
   }
@@ -117,12 +114,8 @@ MMU::write_vram(uint16 addr, uint8 val, Component component)
 uint8
 MMU::read_oam(uint16 addr, Component component)
 {
-  if (dma_active && component != Component::DMA) {
-    log_error("Attempted to read from OAM during DMA transfer");
-    return 0xFF;
-  }
   if (component == Component::CPU) {
-    if (ppu->getMode() == PpuMode::OamSearch ||
+    if (dma_active || ppu->getMode() == PpuMode::OamSearch ||
         ppu->getMode() == PpuMode::PixelTransfer) {
       log_error("Attempted to read from OAM during PPU Mode 3 or 2");
       return 0xFF;
@@ -134,12 +127,8 @@ MMU::read_oam(uint16 addr, Component component)
 void
 MMU::write_oam(uint16 addr, uint8 val, Component component)
 {
-  if (dma_active && component != Component::DMA) {
-    log_error("Attempted to write to OAM during DMA transfer");
-    return;
-  }
   if (component == Component::CPU) {
-    if (ppu->getMode() == PpuMode::OamSearch ||
+    if (dma_active || ppu->getMode() == PpuMode::OamSearch ||
         ppu->getMode() == PpuMode::PixelTransfer) {
       log_error("Attempted to write to OAM during PPU Mode 3 or 2");
       return;
@@ -179,13 +168,12 @@ MMU::read_io(uint16 addr, Component component)
     return cpu->IFR | 0xE0;
   } else if (addr == BootRomAddr) {
     log_error("Reading boot rom?");
-    return 1;
+    return 0xFF;
   } else if (addr == JoypadAddr) {
     return joypad->read();
   }
   log_error("Attempted to read from invalid IO address 0x%X", addr);
   return 0xFF;
-  // TODO other IO
 }
 
 void
@@ -220,7 +208,6 @@ MMU::write_io(uint16 addr, uint8 val, Component component)
     return;
   }
   log_error("Attempted to write to invalid IO address 0x%X", addr);
-  // TODO other IO
 }
 
 uint8
@@ -247,7 +234,7 @@ MMU::read(uint16 addr, Component component)
   } else if (addr >= HramStart && addr <= HramEnd) {
     return read_hram(addr);
   } else if (addr == IEAddr) {
-    return cpu->IER | 0xE0;
+    return cpu->IER;
   }
   log_error("Attempted to read from invalid memory address 0x%X", addr);
   return 0xFF;
@@ -276,7 +263,7 @@ MMU::write(uint16 addr, uint8 val, Component component)
   } else if (addr >= HramStart && addr <= HramEnd) {
     write_hram(addr, val);
   } else if (addr == IEAddr) {
-    cpu->IER = val | 0xE0;
+    cpu->IER = val;
   } else {
     log_error("Attempted to write to invalid memory address 0x%X", addr);
   }
@@ -286,5 +273,4 @@ void
 MMU::requestInterrupt(Interrupt interrupt)
 {
   cpu->IFR |= static_cast<uint8>(interrupt);
-  // TODO check if other handling is needed
 }

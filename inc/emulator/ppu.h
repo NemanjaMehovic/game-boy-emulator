@@ -2,8 +2,8 @@
 #define PPU_H
 
 #include "common.h"
-#include <vector>
 #include <deque>
+#include <vector>
 
 enum class PpuMode
 {
@@ -46,6 +46,7 @@ struct oam_pixel_data
 class PPU
 {
   friend class MMU;
+
 public:
   PPU();
   void tick(uint64 Tcycle);
@@ -57,7 +58,6 @@ public:
   uint32 LCD_PIXELS[GB_HEIGHT * GB_WIDTH];
 
 private:
-
   enum class FetcherState
   {
     Delay,
@@ -106,7 +106,7 @@ private:
   uint8 wy_internal = 0xFF;
 
   std::deque<bg_win_pixel_data> bg_win_fifo;
-  std::deque<oam_pixel_data>  object_fifo;
+  std::deque<oam_pixel_data> object_fifo;
 
   FetcherState fstate = FetcherState::Delay;
   FetcherState object_fstate = FetcherState::Delay;
