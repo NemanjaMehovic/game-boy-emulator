@@ -130,7 +130,8 @@ PPU::OamSearch()
   // OAM search gets one oam entry per 2 ticks
   if (num_of_oam_entries < 10 && (scanline_ticks % 2) == 1) {
     // TODO handle oam bug
-    uint8 y_byte = mmu->read(OamStart + 4 * (int)(scanline_ticks / 2), Component::PPU);
+    uint8 y_byte =
+      mmu->read(OamStart + 4 * (int)(scanline_ticks / 2), Component::PPU);
     uint8 x_byte =
       mmu->read(OamStart + 4 * (int)(scanline_ticks / 2) + 1, Component::PPU);
 
@@ -243,11 +244,12 @@ PPU::SpriteFetcher()
         oam_pixel_data fifo_pixel_data = object_fifo[fifo_index];
         bool transparency = fifo_pixel_data.palette_id == 0 &&
                             object_pixels[fifo_index].palette_id != 0;
-        bool entry_number =
-          fifo_pixel_data.palette_id != 0 &&
-          object_pixels[fifo_index].palette_id != 0 &&
-          fifo_pixel_data.x == object_pixels[fifo_index].x &&
-          object_pixels[fifo_index].entry_number < fifo_pixel_data.entry_number;
+        bool entry_number = (fifo_pixel_data.palette_id != 0 &&
+                             object_pixels[fifo_index].palette_id != 0) &&
+                            (fifo_pixel_data.x == object_pixels[fifo_index].x &&
+                             object_pixels[fifo_index].entry_number <
+                               fifo_pixel_data.entry_number);
+
         if (transparency || entry_number) {
           object_fifo[fifo_index] = object_pixels[fifo_index];
         }
@@ -342,7 +344,6 @@ PPU::PixelFetcher()
         tile_y = (LY + SCY) % 8;
       }
       tile_data_addr = tile_data_addr + 2 * tile_y;
-      fstate = FetcherState::Delay;
       if (fstate == FetcherState::GetData0) {
         tile_data0 = mmu->read(tile_data_addr, Component::PPU);
         next_fstate = FetcherState::GetData1;
@@ -350,6 +351,7 @@ PPU::PixelFetcher()
         tile_data1 = mmu->read(tile_data_addr + 1, Component::PPU);
         next_fstate = FetcherState::Push;
       }
+      fstate = FetcherState::Delay;
     } break;
     case FetcherState::Push: {
       if (bg_win_fifo.size() == 0) {
@@ -440,9 +442,11 @@ PPU::PixelTransfer()
         palette_id = sprite_pixel.palette_id;
       }
     }
-
     uint8 color_id = ((*palette) >> (palette_id * 2)) & 0x03;
     if (lx >= 8) {
+      if (palette == &BGP && (LCDC & 0x01) == 0) {
+        color_id = 0;
+      }
       LCD_PIXELS[LY * GB_WIDTH + (lx - 8)] = GB_COLORS[color_id];
     }
 
@@ -645,16 +649,20 @@ PPU::handleLCDCChanges(uint8 old_val)
     wy_internal = 0xFF;
     wy_active = false;
     last_stat_irq = false;
-    last_vblank_line=false;
+    last_vblank_line = false;
     num_of_oam_entries = 0;
     setMode(PpuMode::HBlank);
     for (int i = 0; i < 256; i++) {
       oam_buffer[i].clear();
     }
+    for (int i = 0; i < (GB_HEIGHT * GB_WIDTH); i++) {
+      LCD_PIXELS[i] = 0xFFFF0000;
+    }
   } else {
     log_info("LCDC turned on");
     use_turn_on_oam_scan = true;
     bool lyc_eq_ly = (LYC == LY) && internal_enable_lyc_eq_ly_irq;
+    turned_on_again = true;
     if (lyc_eq_ly) {
       STAT |= 0x04;
     } else {

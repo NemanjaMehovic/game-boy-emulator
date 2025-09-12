@@ -1,12 +1,13 @@
 #include "mmu.h"
 #include "common.h"
 
-MMU::MMU(CPU* cpu, Cartridge* cartridge, PPU* ppu, Timer* timer, APU* apu)
+MMU::MMU(CPU* cpu, Cartridge* cartridge, PPU* ppu, Timer* timer, APU* apu, Joypad* joypad)
   : cpu(cpu)
   , cartridge(cartridge)
   , ppu(ppu)
   , timer(timer)
   , apu(apu)
+  , joypad(joypad)
 {
 }
 
@@ -175,10 +176,12 @@ MMU::read_io(uint16 addr, Component component)
       return sb;
     }
   } else if (addr == IFRAddr) {
-    return cpu->IFR;
+    return cpu->IFR | 0xE0;
   } else if (addr == BootRomAddr) {
-    log_error("Reading boor rom?");
+    log_error("Reading boot rom?");
     return 1;
+  } else if (addr == JoypadAddr) {
+    return joypad->read();
   }
   log_error("Attempted to read from invalid IO address 0x%X", addr);
   return 0xFF;
@@ -200,14 +203,20 @@ MMU::write_io(uint16 addr, uint8 val, Component component)
   } else if (addr >= SerialStart && addr <= SerialEnd) {
     if (addr == 0xFF02) {
       sc = val | 0x7E;
-      log_info("SC = %X", sc);
+      log_debug("SC = %X", sc);
     } else {
       sb = val;
-      log_info("SB = %X", sb);
+      log_debug("SB = %X", sb);
     }
     return;
   } else if (addr == IFRAddr) {
-    cpu->IFR = val;
+    cpu->IFR = val | 0xE0;
+    return;
+  } else if (addr == BootRomAddr) {
+    log_error("Writing to boot rom?");
+    return;
+  } else if (addr == JoypadAddr) {
+    joypad->write(val);
     return;
   }
   log_error("Attempted to write to invalid IO address 0x%X", addr);
@@ -238,7 +247,7 @@ MMU::read(uint16 addr, Component component)
   } else if (addr >= HramStart && addr <= HramEnd) {
     return read_hram(addr);
   } else if (addr == IEAddr) {
-    return cpu->IER;
+    return cpu->IER | 0xE0;
   }
   log_error("Attempted to read from invalid memory address 0x%X", addr);
   return 0xFF;
@@ -267,7 +276,7 @@ MMU::write(uint16 addr, uint8 val, Component component)
   } else if (addr >= HramStart && addr <= HramEnd) {
     write_hram(addr, val);
   } else if (addr == IEAddr) {
-    cpu->IER = val;
+    cpu->IER = val | 0xE0;
   } else {
     log_error("Attempted to write to invalid memory address 0x%X", addr);
   }

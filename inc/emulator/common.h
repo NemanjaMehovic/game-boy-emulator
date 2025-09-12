@@ -67,6 +67,8 @@ constexpr uint16 IFRAddr = 0xFF0F;
 constexpr uint16 IEAddr = 0xFFFF;
 // BootRom Register
 constexpr uint16 BootRomAddr = 0xFF50;
+// Joypad Register
+constexpr uint16 JoypadAddr = 0xFF00;
 
 // Gameboy screen resolution
 constexpr int GB_WIDTH = 160;

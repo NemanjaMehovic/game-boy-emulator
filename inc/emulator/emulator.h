@@ -11,6 +11,7 @@
 #include "mmu.h"
 #include "ppu.h"
 #include "timer.h"
+#include "joypad.h"
 
 class Emulator
 {
@@ -31,6 +32,7 @@ private:
   std::unique_ptr<APU> m_apu;
   std::unique_ptr<Timer> m_timer;
   std::unique_ptr<MMU> m_mmu;
+  std::unique_ptr<Joypad> m_joypad;
   uint64 m_Tcycles = 0;
 };
 

@@ -86,6 +86,8 @@ private:
   uint8 WX = 0;
   uint16 scanline_ticks = 0;
 
+  bool turned_on_again = false;
+
   bool use_turn_on_oam_scan = false;
   bool internal_enable_lyc_eq_ly_irq = true;
   bool last_stat_irq = false;

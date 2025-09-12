@@ -1911,12 +1911,11 @@ CPU::halt()
   halted = getInterrupts() == 0;
   instruction_cycles = 0;
   read(PC);
-
+  log_debug("halt halted = %d IME = %d IFR = %d IER = %d", halted, ime == Ime::Enable, IFR, IER);
   if (ime != Ime::Enable && !halted) {
     return;
   }
   iduInc(PC);
-  log_debug("halt");
 }
 
 void

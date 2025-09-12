@@ -179,29 +179,32 @@ MBC1_Handler::write_rom(uint16 address, uint8 val)
 {
   if (address < 0x2000) {
     m_enabled_ram = mask_n_bits(4, val) == 0xA;
-    log_info("Set m_enable_ram to %d", m_enabled_ram);
+    log_debug("Set m_enable_ram to %d", m_enabled_ram);
     return;
   }
   if (address < 0x4000) {
     uint8 tmpVal = mask_n_bits(m_is_mbc1m ? 4 : 5, val);
     m_low_banking_bits = tmpVal != 0 ? tmpVal : 1;
-    log_info("Set m_low_banking_bits to 0x%X", m_low_banking_bits);
+    log_debug("Set m_low_banking_bits to 0x%X", m_low_banking_bits);
     return;
   }
   if (address < 0x6000) {
     m_high_banking_bits = mask_n_bits(2, val);
-    log_info("Set m_high_banking_bits to 0x%X", m_high_banking_bits);
+    log_debug("Set m_high_banking_bits to 0x%X", m_high_banking_bits);
     return;
   }
   m_mode = val & 1;
-  log_info("Set m_mode to %d", m_mode);
+  log_debug("Set m_mode to %d", m_mode);
 }
 
 void
 MBC1_Handler::write_ram(uint16 address, uint8 val)
 {
   if (!m_ram || !m_enabled_ram) {
-    log_error("Called write to ram for MBC1 that has no ram/hasn't enabled it");
+    log_error("Called write to ram for MBC1 that has no ram/hasn't enabled it, "
+              "addr 0x%04X, val 0x%02X",
+              address,
+              val);
     return;
   }
   uint32 tmp_address = mask_n_bits(13, address);
@@ -276,10 +279,10 @@ MBC2_Handler::write_rom(uint16 address, uint8 val)
   if ((address & (1 << 8)) != 0) {
     uint8 tmpVal = mask_n_bits(4, val);
     m_banking_bits = tmpVal != 0 ? tmpVal : 1;
-    log_info("Set m_banking_bits to 0x%X", m_banking_bits);
+    log_debug("Set m_banking_bits to 0x%X", m_banking_bits);
   } else {
     m_enabled_ram = mask_n_bits(4, val) == 0xA;
-    log_info("Set m_enable_ram to %d", m_enabled_ram);
+    log_debug("Set m_enable_ram to %d", m_enabled_ram);
   }
 }
 
@@ -287,7 +290,10 @@ void
 MBC2_Handler::write_ram(uint16 address, uint8 val)
 {
   if (!m_enabled_ram) {
-    log_error("Called write to ram for MBC2 that hasn't enabled it");
+    log_error("Called write to ram for MBC2 that hasn't enabled it, "
+              "addr 0x%04X, val 0x%02X",
+              address,
+              val);
     return;
   }
   uint32 tmp_address = mask_n_bits(9, address);

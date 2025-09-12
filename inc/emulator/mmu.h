@@ -7,10 +7,11 @@
 #include "cartridge.h"
 #include "ppu.h"
 #include "timer.h"
+#include "joypad.h"
 
 class MMU {
 public:
-    MMU(CPU* cpu, Cartridge* cartridge, PPU* ppu, Timer* timer, APU* apu);
+    MMU(CPU* cpu, Cartridge* cartridge, PPU* ppu, Timer* timer, APU* apu, Joypad* joypad);
     uint8 read(uint16 addr, Component component);
     void write(uint16 addr, uint8 val, Component component);
     void setDmaActive(bool active) { dma_active = active; }
@@ -36,6 +37,7 @@ private:
     PPU* ppu;
     Timer* timer;
     APU* apu;
+    Joypad* joypad;
     uint8 wram[WramSize] = {0};
     uint8 vram[VramSize] = {0};
     uint8 oam[OamSize] = {0};

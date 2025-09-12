@@ -18,11 +18,13 @@ Emulator::Emulator(std::string file)
   m_ppu = std::make_unique<PPU>();
   m_timer = std::make_unique<Timer>();
   m_apu = std::make_unique<APU>();
+  m_joypad = std::make_unique<Joypad>();
   m_mmu = std::make_unique<MMU>(
-    m_cpu.get(), m_cartridge.get(), m_ppu.get(), m_timer.get(), m_apu.get());
+    m_cpu.get(), m_cartridge.get(), m_ppu.get(), m_timer.get(), m_apu.get(), m_joypad.get());
   m_cpu->setMMU(m_mmu.get());
   m_ppu->setMMU(m_mmu.get());
   m_timer->setMMU(m_mmu.get());
+  m_joypad->setMMU(m_mmu.get());
   m_Tcycles = 0;
 }
 
