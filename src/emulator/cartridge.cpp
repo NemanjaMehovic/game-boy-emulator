@@ -26,11 +26,11 @@ Cartridge::Cartridge(std::string location)
   m_cartridge_size = size;
 
   m_valid = checkData();
-  m_valid = true;
-  // if (!m_valid) {
-  //   log_error("Loaded cartridge isn't valid");
-  //   return;
-  // }
+  if (!m_valid) {
+    log_error("Loaded cartridge isn't valid");
+    // Some test roms don't have valid headers so we won't fail here
+    m_valid = true;
+  }
 
   m_mbc_handler = MBC_Handler::CreateHandler(this);
 

@@ -100,7 +100,14 @@ Emulator::mainLoop()
                                  SCREEN_WIDTH,
                                  SCREEN_HEIGHT);
   bool running = true;
+  auto startTime= std::chrono::steady_clock::now();
+  const double FPSMAX=1000.0/59.7;
   while (running) {
+    auto endTime = std::chrono::steady_clock::now();
+	  std::chrono::duration<double, std::milli> delta = endTime - startTime;
+    startTime = endTime;
+     
+    auto frameStart = std::chrono::steady_clock::now();
     SDL_Event e;
     while (SDL_PollEvent(&e) > 0) {
       if (e.type == SDL_WINDOWEVENT &&
@@ -133,7 +140,14 @@ Emulator::mainLoop()
     SDL_RenderClear(sdlRenderer);
     SDL_RenderCopy(sdlRenderer, sdlTexture, NULL, NULL);
     SDL_RenderPresent(sdlRenderer);
-    std::this_thread::sleep_for(std::chrono::milliseconds(17));
+
+    auto frameEnd = std::chrono::steady_clock::now();
+    delta = endTime - startTime;
+
+    if (delta.count() < FPSMAX)
+    {
+      std::this_thread::sleep_for(std::chrono::nanoseconds(static_cast<int64>((FPSMAX - delta.count()) * 1000000)));
+    }
   }
 
   SDL_DestroyTexture(sdlTexture);

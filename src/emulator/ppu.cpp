@@ -656,7 +656,7 @@ PPU::handleLCDCChanges(uint8 old_val)
       oam_buffer[i].clear();
     }
     for (int i = 0; i < (GB_HEIGHT * GB_WIDTH); i++) {
-      LCD_PIXELS[i] = 0xFFFF0000;
+      LCD_PIXELS[i] = GB_COLORS[0];
     }
   } else {
     log_info("LCDC turned on");
